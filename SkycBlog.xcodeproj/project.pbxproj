@@ -7,18 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		038396D7A5F7B86556311CF8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A11D2E1C5A6128973FCA10F /* ContentView.swift */; };
 		095FA32911CC8EF1B24982E2 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB1F9C5A758D7EF53C0A6B4 /* Utils.swift */; };
 		0C4CDCC63B95F9C91FFBCFBA /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0C6901E420E09676902863F9 /* BuildCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912FF5541A843C1E9095E49E /* BuildCommand.swift */; };
 		0E00399371C9BF6385845D81 /* MiniYAML.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2987CEF6CD797203F607966 /* MiniYAML.swift */; };
 		1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */; };
 		21C3A4624983E1D6E877A9DB /* BlogCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6968851F277A935794EE6AE6 /* BlogCLI.swift */; };
+		220023A7DB23E0593F7CB949 /* Sheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE29EB73E51629A415D25A87 /* Sheets.swift */; };
 		244D09DADF49A428FB54D565 /* Builder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33BA4951A726FF945D63E69 /* Builder.swift */; };
 		31373037844FE1A8D4CFE5FA /* SiteConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB8C56D8B6894B336433B39 /* SiteConfig.swift */; };
 		3D739F294FF9A1C0B79CA6A3 /* Deploy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88CCD3A16D73C7F158AA16F5 /* Deploy.swift */; };
+		3E3EE319A7194606CCB95409 /* DetailColumn.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE32D32E3EE6D932FDEAD142 /* DetailColumn.swift */; };
 		46134DCE11FD64E758FE4CEC /* Outputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6236FC29D7EB717DE5F6A7ED /* Outputs.swift */; };
 		4FCB06A4F14B484143B38311 /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		53A04E177314C66633C00F45 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 633CBB3977C50330BEA92CF2 /* AppState.swift */; };
 		61E51C8ED4D1DD6ABFC0C8E5 /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD8FAA4736220CC67F75537 /* PluginManager.swift */; };
 		62496C7C15B9FF2FC8E89975 /* EXIFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */; };
 		7B265BC744F982B5E19DF5F4 /* MarkdownRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE38DAEC28EFBC41EDBF713 /* MarkdownRenderer.swift */; };
@@ -31,14 +33,16 @@
 		AB31469AC29BA9E90B0E8E47 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A0FA94F533C7104F8B1D13 /* Keychain.swift */; };
 		AE6720FB2B751E169C7AD159 /* EmbeddedTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */; };
 		B78250015F009733A0D95560 /* ProjectScaffold.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26231D2B9B469FE72A4EA145 /* ProjectScaffold.swift */; };
-		C1945B5D1C076185784451EB /* ContentLists.swift in Sources */ = {isa = PBXBuildFile; fileRef = 394BF6BE5A4190A712C67D14 /* ContentLists.swift */; };
+		BDC0061862F24666BEF72CF3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CE6FD798C84E3894DD8E84D /* RootView.swift */; };
 		C49C0A85308623B1D56F45C7 /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C212393995203A0D2C203C7D /* ContentLoader.swift */; };
 		C77A0AD980AD4CC832416D05 /* DeployCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DD818386176E0B7425A16D /* DeployCommand.swift */; };
 		C992A8595AB165071A1CCD3C /* ThemeCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */; };
+		CCBB5E41C10DF27EA4640669 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A787A4AD0DA235562E1A08 /* Theme.swift */; };
 		D323321BC4AECAE5072C9D61 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */; };
 		D5B81AC1B9ABC4C9C1734ADC /* HTMLMinifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */; };
 		DE31CFD64A9B103181915E8D /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */; };
 		E0AD57A922CA231E58EAFD1C /* InitCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A33AA6CE9B5D52FEE1CCF3F2 /* InitCommand.swift */; };
+		E9C09208CF321694A495C3DB /* Columns.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C406A294043190E46BA601 /* Columns.swift */; };
 		EE93F9A5D72982E7555E0C99 /* WebPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C731EF0EC4EE82632F4E615A /* WebPreview.swift */; };
 		F485521C2277BA1493F5798F /* SkycBlogCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; };
 /* End PBXBuildFile section */
@@ -87,11 +91,11 @@
 
 /* Begin PBXFileReference section */
 		05DD818386176E0B7425A16D /* DeployCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeployCommand.swift; sourceTree = "<group>"; };
+		09A787A4AD0DA235562E1A08 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		1435ED9AE6EE3AF557B93D9A /* ServeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServeCommand.swift; sourceTree = "<group>"; };
 		1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeCommand.swift; sourceTree = "<group>"; };
 		1BB8C56D8B6894B336433B39 /* SiteConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteConfig.swift; sourceTree = "<group>"; };
 		26231D2B9B469FE72A4EA145 /* ProjectScaffold.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectScaffold.swift; sourceTree = "<group>"; };
-		394BF6BE5A4190A712C67D14 /* ContentLists.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLists.swift; sourceTree = "<group>"; };
 		4328AEE98C4559270C427997 /* NewCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewCommand.swift; sourceTree = "<group>"; };
 		4DA33F8313A6A379F4B2B179 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4DD8FAA4736220CC67F75537 /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
@@ -99,6 +103,7 @@
 		5C54F3C6096A4AE880B1AE1A /* blog */ = {isa = PBXFileReference; includeInIndex = 0; path = blog; sourceTree = BUILT_PRODUCTS_DIR; };
 		5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLMinifier.swift; sourceTree = "<group>"; };
 		6236FC29D7EB717DE5F6A7ED /* Outputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outputs.swift; sourceTree = "<group>"; };
+		633CBB3977C50330BEA92CF2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		67317FC7516245A79055D606 /* SkycBlogCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SkycBlogCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6968851F277A935794EE6AE6 /* BlogCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogCLI.swift; sourceTree = "<group>"; };
 		69B22B06EA05740FC27028E2 /* BlogProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogProject.swift; sourceTree = "<group>"; };
@@ -106,7 +111,7 @@
 		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkycBlogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		912FF5541A843C1E9095E49E /* BuildCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildCommand.swift; sourceTree = "<group>"; };
 		93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkycBlogApp.swift; sourceTree = "<group>"; };
-		9A11D2E1C5A6128973FCA10F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9CE6FD798C84E3894DD8E84D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9E24840EBECA4D0A8644485D /* LocalServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalServer.swift; sourceTree = "<group>"; };
 		9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedTheme.swift; sourceTree = "<group>"; };
@@ -119,8 +124,11 @@
 		C731EF0EC4EE82632F4E615A /* WebPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPreview.swift; sourceTree = "<group>"; };
 		CAB1F9C5A758D7EF53C0A6B4 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		CBE38DAEC28EFBC41EDBF713 /* MarkdownRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderer.swift; sourceTree = "<group>"; };
+		D1C406A294043190E46BA601 /* Columns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Columns.swift; sourceTree = "<group>"; };
 		D33BA4951A726FF945D63E69 /* Builder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Builder.swift; sourceTree = "<group>"; };
+		DE32D32E3EE6D932FDEAD142 /* DetailColumn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailColumn.swift; sourceTree = "<group>"; };
 		E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
+		FE29EB73E51629A415D25A87 /* Sheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sheets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,12 +210,16 @@
 		87C881E7BC0DF13F38EA4532 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				633CBB3977C50330BEA92CF2 /* AppState.swift */,
 				69B22B06EA05740FC27028E2 /* BlogProject.swift */,
-				394BF6BE5A4190A712C67D14 /* ContentLists.swift */,
-				9A11D2E1C5A6128973FCA10F /* ContentView.swift */,
+				D1C406A294043190E46BA601 /* Columns.swift */,
+				DE32D32E3EE6D932FDEAD142 /* DetailColumn.swift */,
 				4DA33F8313A6A379F4B2B179 /* Info.plist */,
+				9CE6FD798C84E3894DD8E84D /* RootView.swift */,
+				FE29EB73E51629A415D25A87 /* Sheets.swift */,
 				A8178C98D419BFA4E550FD2F /* SkycBlog.entitlements */,
 				93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */,
+				09A787A4AD0DA235562E1A08 /* Theme.swift */,
 				C731EF0EC4EE82632F4E615A /* WebPreview.swift */,
 			);
 			path = App;
@@ -444,10 +456,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53A04E177314C66633C00F45 /* AppState.swift in Sources */,
 				9CCA4DD98677A744AE718171 /* BlogProject.swift in Sources */,
-				C1945B5D1C076185784451EB /* ContentLists.swift in Sources */,
-				038396D7A5F7B86556311CF8 /* ContentView.swift in Sources */,
+				E9C09208CF321694A495C3DB /* Columns.swift in Sources */,
+				3E3EE319A7194606CCB95409 /* DetailColumn.swift in Sources */,
+				BDC0061862F24666BEF72CF3 /* RootView.swift in Sources */,
+				220023A7DB23E0593F7CB949 /* Sheets.swift in Sources */,
 				1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */,
+				CCBB5E41C10DF27EA4640669 /* Theme.swift in Sources */,
 				EE93F9A5D72982E7555E0C99 /* WebPreview.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

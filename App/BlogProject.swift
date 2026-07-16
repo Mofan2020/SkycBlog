@@ -17,26 +17,8 @@ final class BlogProject: ObservableObject, Identifiable {
     var outputDir: URL { URL(fileURLWithPath: config.outputDir) }
 
     static func load(root: URL) throws -> BlogProject {
-        let configPath = root.appendingPathComponent("config.yaml").path
-        let text = try String(contentsOfFile: configPath, encoding: .utf8)
-        let dict = MiniYAML.load(text)
         let projectRoot = root.path
-        var config = SiteConfig()
-        config.projectRoot = projectRoot
-        config.title = (dict["title"] as? String) ?? "My Blog"
-        if let desc = dict["description"] as? String { config.description = desc }
-        if let author = dict["author"] as? String { config.author = author }
-        config.language = (dict["language"] as? String) ?? "zh-CN"
-        if let baseURL = dict["baseURL"] as? String { config.baseURL = baseURL }
-        config.outputDir = ((dict["outputDir"] as? String) ?? "output").replacingOccurrences(of: "~", with: projectRoot)
-        if let themeName = dict["theme"] as? String { config.themeName = themeName }
-        config.themeConfig = (dict["themeConfig"] as? [String: Any]) ?? [:]
-        config.permalink = (dict["permalink"] as? String) ?? "/:year/:month/:day/:slug/"
-        config.paginationSize = (dict["paginationSize"] as? Int) ?? 10
-        config.generateRSS = (dict["generateRSS"] as? Bool) ?? true
-        config.generateSitemap = (dict["generateSitemap"] as? Bool) ?? true
-        config.generateSearchIndex = (dict["generateSearchIndex"] as? Bool) ?? true
-        config.minifyHTML = (dict["minifyHTML"] as? Bool) ?? true
+        let config = try ConfigLoader.load(projectRoot: projectRoot)
         let p = BlogProject(root: root, config: config)
         p.refresh()
         return p
