@@ -83,7 +83,11 @@ public final class ConfigLoader {
             let path = (config.projectRoot as NSString).appendingPathComponent(name)
             if FileManager.default.fileExists(atPath: path) {
                 if let merged = try loadFile(path: path) {
-                    config = merged
+                    // loadFile 内部 merge 默认从 SiteConfig.defaults 出发, 该默认值 projectRoot="."
+                    // 必须把调用方传进来的 projectRoot 重新设回, 否则后续路径处理全错。
+                    var m = merged
+                    m.projectRoot = config.projectRoot
+                    config = m
                 }
                 break
             }

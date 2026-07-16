@@ -20,16 +20,34 @@ public final class Builder {
         let start = Date()
         Log.info("开始构建：\(projectRoot)")
 
+        // 0. 兜底: 把 absOutput 转成绝对路径, 避免 cwd 不对导致写到错地方
+        var absOutput = config.outputDir
+        if !absOutput.hasPrefix("/") {
+            let cwd = FileManager.default.currentDirectoryPath
+            absOutput = FSUtil.normalize((cwd as NSString).appendingPathComponent(absOutput))
+        } else {
+            absOutput = FSUtil.normalize((absOutput as NSString).expandingTildeInPath)
+        }
+        // 如果 projectRoot 是绝对路径, 优先把 outputDir 限制在 projectRoot 内 (避免之前被写成 /output 之类的系统目录)
+        if projectRoot.hasPrefix("/") {
+            let rootWithSep = projectRoot.hasSuffix("/") ? projectRoot : projectRoot + "/"
+            if absOutput != projectRoot, !absOutput.hasPrefix(rootWithSep) {
+                let baseName = (absOutput as NSString).lastPathComponent
+                let target = (projectRoot as NSString).appendingPathComponent(baseName.isEmpty ? "output" : baseName)
+                absOutput = target
+            }
+        }
+
         // 1. 准备输出
-        try? FileManager.default.createDirectory(atPath: config.outputDir, withIntermediateDirectories: true)
-        do { try FSUtil.cleanDirectory(config.outputDir) } catch { Log.warn("清空输出失败：\(error)") }
-        FSUtil.ensureDirectory(config.outputDir)
+        try? FileManager.default.createDirectory(atPath: absOutput, withIntermediateDirectories: true)
+        do { try FSUtil.cleanDirectory(absOutput) } catch { Log.warn("清空输出失败：\(error)") }
+        FSUtil.ensureDirectory(absOutput)
 
         // 2. 加载主题资源
         ThemeManager.copyDefaultIfMissing(projectRoot: projectRoot, themeName: config.themeName)
         // static/ 目录拷贝到 outputDir 下对应的子目录,保留 /static/ 路径,这样模板里的 /static/css/main.css 链接能找到文件
-        copyStaticFolder(from: (themeRoot as NSString).appendingPathComponent("static"), to: (config.outputDir as NSString).appendingPathComponent("static"))
-        copyStaticFolder(from: (projectRoot as NSString).appendingPathComponent("static"), to: (config.outputDir as NSString).appendingPathComponent("static"))
+        copyStaticFolder(from: (themeRoot as NSString).appendingPathComponent("static"), to: (absOutput as NSString).appendingPathComponent("static"))
+        copyStaticFolder(from: (projectRoot as NSString).appendingPathComponent("static"), to: (absOutput as NSString).appendingPathComponent("static"))
 
         // 3. 加载内容
         let content = ContentLoader(projectRoot: projectRoot, config: config)
@@ -86,7 +104,7 @@ public final class Builder {
             // 选用 layout 模板
             let template = pickLayout(engine: engine, name: p.layout)
             let html = engine.render(template: template, context: ctx)
-            let path = (config.outputDir as NSString).appendingPathComponent(p.outPath)
+            let path = (absOutput as NSString).appendingPathComponent(p.outPath)
             FSUtil.ensureDirectory((path as NSString).deletingLastPathComponent)
             var outHTML: String
             if html.lowercased().contains("<!doctype") {
@@ -96,38 +114,38 @@ public final class Builder {
                 outHTML = "<!DOCTYPE html>\n<html lang=\"\(config.language)\">\n" + html
             }
             if config.minifyHTML { outHTML = HTMLMinifier.minify(outHTML) }
-            let absPath = (config.outputDir as NSString).appendingPathComponent(p.outPath)
+            let absPath = (absOutput as NSString).appendingPathComponent(p.outPath)
             FSUtil.writeText(outHTML, to: absPath)
             plugins.fire("afterRender", args: [p.outPath, outHTML])
             result.generated.append(p.outPath)
         }
 
         // 7. 索引页（首页）
-        renderIndex(engine: engine, site: site, outDir: config.outputDir, posts: content.posts(), paginationSize: config.paginationSize, result: &result)
+        renderIndex(engine: engine, site: site, outDir: absOutput, posts: content.posts(), paginationSize: config.paginationSize, result: &result)
         // 8. 归档页
-        renderArchives(engine: engine, site: site, outDir: config.outputDir, posts: content.posts(), result: &result)
+        renderArchives(engine: engine, site: site, outDir: absOutput, posts: content.posts(), result: &result)
         // 9. 标签聚合
-        renderTagPages(engine: engine, site: site, outDir: config.outputDir, posts: content.posts(), tags: content.allTags, result: &result)
+        renderTagPages(engine: engine, site: site, outDir: absOutput, posts: content.posts(), tags: content.allTags, result: &result)
         // 10. 分类聚合
-        renderCategoryPages(engine: engine, site: site, outDir: config.outputDir, categories: content.allCategories, result: &result)
+        renderCategoryPages(engine: engine, site: site, outDir: absOutput, categories: content.allCategories, result: &result)
         // 11. 相册
-        renderAlbums(engine: engine, site: site, outDir: config.outputDir, albums: content.albums(), projectRoot: projectRoot, result: &result)
+        renderAlbums(engine: engine, site: site, outDir: absOutput, albums: content.albums(), projectRoot: projectRoot, result: &result)
         // 12. RSS / sitemap / search.json / 404
         if config.generateRSS {
             let rss = RSSBuilder.build(config: config, posts: content.posts())
-            FSUtil.writeText(rss, to: (config.outputDir as NSString).appendingPathComponent("rss.xml"))
+            FSUtil.writeText(rss, to: (absOutput as NSString).appendingPathComponent("rss.xml"))
             result.generated.append("rss.xml")
         }
         if config.generateSitemap {
             let sm = SitemapBuilder.build(config: config, pages: content.pages)
-            FSUtil.writeText(sm, to: (config.outputDir as NSString).appendingPathComponent("sitemap.xml"))
+            FSUtil.writeText(sm, to: (absOutput as NSString).appendingPathComponent("sitemap.xml"))
             result.generated.append("sitemap.xml")
         }
         if config.generateSearchIndex {
             let idx = SearchIndexBuilder.build(pages: content.posts())
             if let data = try? JSONSerialization.data(withJSONObject: idx, options: [.prettyPrinted, .sortedKeys]),
                let str = String(data: data, encoding: .utf8) {
-                FSUtil.writeText(str, to: (config.outputDir as NSString).appendingPathComponent("search.json"))
+                FSUtil.writeText(str, to: (absOutput as NSString).appendingPathComponent("search.json"))
                 result.generated.append("search.json")
             }
         }
@@ -135,7 +153,7 @@ public final class Builder {
         if let tpl = FSUtil.readText((themeRoot as NSString).appendingPathComponent("templates/404.html")) {
             let html = engine.render(template: tpl, context: site)
             let wrap = "<!DOCTYPE html>\n<html lang=\"\(config.language)\">\n<head><meta charset=\"UTF-8\"/><title>404</title></head>\n<body>\n\(html)\n</body></html>"
-            FSUtil.writeText(wrap, to: (config.outputDir as NSString).appendingPathComponent("404.html"))
+            FSUtil.writeText(wrap, to: (absOutput as NSString).appendingPathComponent("404.html"))
             result.generated.append("404.html")
         }
 
