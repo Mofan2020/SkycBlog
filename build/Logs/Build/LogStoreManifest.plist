@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>246A2035-0D3D-4AC0-BDA8-4CDE619BECAA</key>
+		<key>1CB96310-D40C-4FC7-98D3-4C4630820448</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,17 +15,17 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>246A2035-0D3D-4AC0-BDA8-4CDE619BECAA.xcactivitylog</string>
+			<string>1CB96310-D40C-4FC7-98D3-4C4630820448.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>S</string>
+				<string>E</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
+				<integer>2</integer>
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
@@ -40,15 +40,15 @@
 			<key>signature</key>
 			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>805903348.12235498</real>
+			<real>805934933.03959799</real>
 			<key>timeStoppedRecording</key>
-			<real>805903349.32332397</real>
+			<real>805934935.94776702</real>
 			<key>title</key>
 			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>246A2035-0D3D-4AC0-BDA8-4CDE619BECAA</string>
+			<string>1CB96310-D40C-4FC7-98D3-4C4630820448</string>
 		</dict>
-		<key>3E15BF48-6B44-461F-9FFE-76C275FB61D2</key>
+		<key>340E6B86-8893-4EFB-B032-9D75FA9560F3</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,91 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>3E15BF48-6B44-461F-9FFE-76C275FB61D2.xcactivitylog</string>
+			<string>340E6B86-8893-4EFB-B032-9D75FA9560F3.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>5</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>13</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>SkycBlog project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>SkycBlogApp</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>805934949.451823</real>
+			<key>timeStoppedRecording</key>
+			<real>805934951.791471</real>
+			<key>title</key>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>340E6B86-8893-4EFB-B032-9D75FA9560F3</string>
+		</dict>
+		<key>3E05B166-5A6F-40B7-AE9C-1E71D096C8D8</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>3E05B166-5A6F-40B7-AE9C-1E71D096C8D8.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>7</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>SkycBlog project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>SkycBlogApp</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>805935008.799505</real>
+			<key>timeStoppedRecording</key>
+			<real>805935012.08686697</real>
+			<key>title</key>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>3E05B166-5A6F-40B7-AE9C-1E71D096C8D8</string>
+		</dict>
+		<key>43FC410B-2CF6-42EC-A32C-2504F59B02F7</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>43FC410B-2CF6-42EC-A32C-2504F59B02F7.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,15 +166,15 @@
 			<key>signature</key>
 			<string>Building project SkycBlog with scheme blog and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>805903259.17055798</real>
+			<real>805935069.62851405</real>
 			<key>timeStoppedRecording</key>
-			<real>805903260.86380994</real>
+			<real>805935071.20720398</real>
 			<key>title</key>
 			<string>Building project SkycBlog with scheme blog and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>3E15BF48-6B44-461F-9FFE-76C275FB61D2</string>
+			<string>43FC410B-2CF6-42EC-A32C-2504F59B02F7</string>
 		</dict>
-		<key>606036BD-A7BC-4D0A-B56D-DD3B7096CADC</key>
+		<key>592743DA-E444-40A5-8F5A-9F38FC943C13</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -99,17 +183,17 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>606036BD-A7BC-4D0A-B56D-DD3B7096CADC.xcactivitylog</string>
+			<string>592743DA-E444-40A5-8F5A-9F38FC943C13.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>S</string>
+				<string>E</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
+				<integer>5</integer>
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
@@ -118,21 +202,21 @@
 			<key>schemeIdentifier-containerName</key>
 			<string>SkycBlog project</string>
 			<key>schemeIdentifier-schemeName</key>
-			<string>blog</string>
+			<string>SkycBlogApp</string>
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Building project SkycBlog with scheme blog and configuration Debug</string>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>805903251.89551902</real>
+			<real>805934991.27380502</real>
 			<key>timeStoppedRecording</key>
-			<real>805903253.36747801</real>
+			<real>805934995.47061801</real>
 			<key>title</key>
-			<string>Building project SkycBlog with scheme blog and configuration Debug</string>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>606036BD-A7BC-4D0A-B56D-DD3B7096CADC</string>
+			<string>592743DA-E444-40A5-8F5A-9F38FC943C13</string>
 		</dict>
-		<key>807C30ED-2E71-4F9B-9EA4-BD505C7D1B21</key>
+		<key>A2018D24-0188-4BEE-A73E-E0A378DB7813</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -141,7 +225,49 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>807C30ED-2E71-4F9B-9EA4-BD505C7D1B21.xcactivitylog</string>
+			<string>A2018D24-0188-4BEE-A73E-E0A378DB7813.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>5</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>SkycBlog project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>SkycBlogApp</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>805935041.98888099</real>
+			<key>timeStoppedRecording</key>
+			<real>805935045.23163903</real>
+			<key>title</key>
+			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>A2018D24-0188-4BEE-A73E-E0A378DB7813</string>
+		</dict>
+		<key>B9CDCCAC-B598-4FD8-9DED-603F6BE13463</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>B9CDCCAC-B598-4FD8-9DED-603F6BE13463.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -155,7 +281,7 @@
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>2</integer>
+				<integer>13</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>SkycBlog project</string>
@@ -166,55 +292,13 @@
 			<key>signature</key>
 			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>805903245.27729106</real>
+			<real>805935053.93753898</real>
 			<key>timeStoppedRecording</key>
-			<real>805903249.39011002</real>
+			<real>805935063.41050804</real>
 			<key>title</key>
 			<string>Building project SkycBlog with scheme SkycBlogApp and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>807C30ED-2E71-4F9B-9EA4-BD505C7D1B21</string>
-		</dict>
-		<key>C97FE17C-D998-4321-BDEE-3FCE30729905</key>
-		<dict>
-			<key>className</key>
-			<string>IDECommandLineBuildLog</string>
-			<key>documentTypeString</key>
-			<string>&lt;nil&gt;</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
-			<key>fileName</key>
-			<string>C97FE17C-D998-4321-BDEE-3FCE30729905.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-				<key>totalNumberOfAnalyzerIssues</key>
-				<integer>0</integer>
-				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
-				<key>totalNumberOfTestFailures</key>
-				<integer>0</integer>
-				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>SkycBlog project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>blog</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Building project SkycBlog with scheme blog and configuration Debug</string>
-			<key>timeStartedRecording</key>
-			<real>805903337.91985404</real>
-			<key>timeStoppedRecording</key>
-			<real>805903340.45209002</real>
-			<key>title</key>
-			<string>Building project SkycBlog with scheme blog and configuration Debug</string>
-			<key>uniqueIdentifier</key>
-			<string>C97FE17C-D998-4321-BDEE-3FCE30729905</string>
+			<string>B9CDCCAC-B598-4FD8-9DED-603F6BE13463</string>
 		</dict>
 	</dict>
 </dict>

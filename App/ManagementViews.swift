@@ -3,195 +3,129 @@ import SkycBlogCore
 import AppKit
 import UniformTypeIdentifiers
 
-// MARK: - 通用编辑 Sheet
+// MARK: - 文章元数据编辑
 
-/// 编辑文章的元数据：标题、标签、分类、草稿状态。
+/// 编辑单篇文章的标题/标签/分类/草稿状态。Tags 与 Categories 都支持输入即时添加、点击 chip 删除。
 struct PageMetadataSheet: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme
-
+    @Environment(\.dismiss) private var dismiss
     let page: Page
 
     @State private var title: String = ""
-    @State private var tagsText: String = ""        // 逗号分隔
-    @State private var categoriesText: String = "" // 逗号分隔
-    @State private var isDraft: Bool = false
+    @State private var tagsText: String = ""
+    @State private var categoriesText: String = ""
+    @State private var draft: Bool = false
     @State private var newTag: String = ""
     @State private var newCategory: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
-            SheetHeader(title: "编辑元数据", subtitle: page.url)
-
-            Form {
-                Section("基本信息") {
+            SheetHeader(title: "编辑元数据", subtitle: page.title)
+            Divider().background(theme.divider)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    fieldLabel("标题")
                     TextField("标题", text: $title)
-                    Toggle("保存为草稿", isOn: $isDraft)
-                }
-                Section("标签") {
-                    if !tags.isEmpty {
-                        FlowChips(items: tags, accent: theme.accent) { tag in
-                            removeTag(tag)
-                        }
-                    }
-                    HStack {
-                        TextField("添加标签", text: $newTag)
-                            .onSubmit { addTag() }
-                        Button("添加") { addTag() }
-                            .disabled(newTag.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                    Text("用逗号分隔多个标签：\(tagsText)")
+                        .textFieldStyle(.roundedBorder)
+
+                    fieldLabel("标签 (tags)")
+                    chipEditor(items: parsedTags, new: $newTag, placeholder: "添加标签后回车", add: addTag, remove: removeTag)
+                    Text("在每篇 markdown 的 front matter 里以 `tags: [a, b]` 存储")
                         .font(AppFont.caption())
                         .foregroundStyle(theme.inkTertiary)
-                }
-                Section("分类") {
-                    if !categories.isEmpty {
-                        FlowChips(items: categories, accent: theme.success) { cat in
-                            removeCategory(cat)
-                        }
-                    }
-                    HStack {
-                        TextField("添加分类", text: $newCategory)
-                            .onSubmit { addCategory() }
-                        Button("添加") { addCategory() }
-                            .disabled(newCategory.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                }
-            }
-            .formStyle(.grouped)
-            .scrollContentBackground(.hidden)
 
-            SheetFooter(confirm: "保存", cancel: "取消", confirmDisabled: title.isEmpty) {
-                appState.updatePageMetadata(page,
-                                            title: title,
-                                            tags: tags,
-                                            categories: categories,
-                                            draft: isDraft)
-                dismiss()
+                    fieldLabel("分类 (categories)")
+                    chipEditor(items: parsedCategories, new: $newCategory, placeholder: "添加分类后回车", add: addCategory, remove: removeCategory)
+                    Text("在每篇 markdown 的 front matter 里以 `categories: [a, b]` 存储")
+                        .font(AppFont.caption())
+                        .foregroundStyle(theme.inkTertiary)
+
+                    Toggle("草稿", isOn: $draft)
+                        .toggleStyle(.switch)
+                }
+                .padding(20)
             }
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "保存", cancel: "取消", onConfirm: save)
         }
-        .frame(width: 540, height: 480)
-        .background(theme.background)
-        .onAppear(perform: load)
+        .frame(width: 540, height: 520)
+        .onAppear { hydrate() }
     }
 
-    private var tags: [String] { parseList(tagsText) }
-    private var categories: [String] { parseList(categoriesText) }
-
-    private func parseList(_ s: String) -> [String] {
-        s.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+    private func fieldLabel(_ s: String) -> some View {
+        Text(s).font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
     }
 
-    private func load() {
-        title = page.title
-        tagsText = page.tags.joined(separator: ", ")
-        categoriesText = page.categories.joined(separator: ", ")
-        isDraft = page.kind == .draft
+    private var parsedTags: [String] {
+        tagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+    private var parsedCategories: [String] {
+        categoriesText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
 
     private func addTag() {
         let v = newTag.trimmingCharacters(in: .whitespaces)
         guard !v.isEmpty else { return }
-        if !tags.contains(v) {
-            var merged: [String] = tags
-            merged.append(v)
-            let safe: [String] = merged.map { $0.replacingOccurrences(of: ",", with: " ") }
-            tagsText = safe.joined(separator: ", ")
-        }
+        var list = parsedTags
+        if !list.contains(v) { list.append(v) }
+        tagsText = list.joined(separator: ", ")
         newTag = ""
     }
     private func removeTag(_ t: String) {
-        tagsText = tags.filter { $0 != t }.joined(separator: ", ")
+        tagsText = parsedTags.filter { $0 != t }.joined(separator: ", ")
     }
     private func addCategory() {
         let v = newCategory.trimmingCharacters(in: .whitespaces)
         guard !v.isEmpty else { return }
-        if !categories.contains(v) {
-            let merged = categories + [v]
-            categoriesText = merged.joined(separator: ", ")
-        }
+        var list = parsedCategories
+        if !list.contains(v) { list.append(v) }
+        categoriesText = list.joined(separator: ", ")
         newCategory = ""
     }
     private func removeCategory(_ c: String) {
-        categoriesText = categories.filter { $0 != c }.joined(separator: ", ")
+        categoriesText = parsedCategories.filter { $0 != c }.joined(separator: ", ")
     }
-}
 
-/// 标签/分类芯片
-struct FlowChips: View {
-    let items: [String]
-    let accent: Color
-    let onRemove: (String) -> Void
-    var body: some View {
-        FlowLayout(spacing: 6) {
-            ForEach(items, id: \.self) { item in
-                HStack(spacing: 4) {
-                    Text(item).font(AppFont.caption())
-                    Button {
-                        onRemove(item)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(accent.opacity(0.15))
-                .clipShape(Capsule())
+    private func hydrate() {
+        title = page.title
+        tagsText = page.tags.joined(separator: ", ")
+        categoriesText = page.categories.joined(separator: ", ")
+        draft = page.draft
+    }
+
+    private func save() {
+        let newTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tags = parsedTags
+        let cats = parsedCategories
+        appState.updatePageMetadata(page,
+                                    title: newTitle.isEmpty ? nil : newTitle,
+                                    tags: tags,
+                                    categories: cats,
+                                    draft: draft)
+        dismiss()
+    }
+
+    @ViewBuilder
+    private func chipEditor(items: [String], new: Binding<String>, placeholder: String, add: @escaping () -> Void, remove: @escaping (String) -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // 已存在的 chip
+            if items.isEmpty {
+                Text("暂无")
+                    .font(AppFont.caption())
+                    .foregroundStyle(theme.inkTertiary)
+            } else {
+                FlowChips(items: items) { item in remove(item) }
+            }
+            HStack(spacing: 6) {
+                TextField(placeholder, text: new)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { add() }
+                Button("添加") { add() }
+                    .buttonStyle(.bordered)
+                    .disabled(new.wrappedValue.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
-    }
-}
-
-/// 简单 Flow 布局（SwiftUI 自带 Layout 协议）
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        let lines = layoutLines(in: maxWidth, subviews: subviews)
-        let height = lines.reduce(0) { $0 + $1.height + spacing } - (lines.isEmpty ? 0 : spacing)
-        return CGSize(width: maxWidth, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let maxWidth = bounds.width
-        let lines = layoutLines(in: maxWidth, subviews: subviews)
-        var y = bounds.minY
-        for line in lines {
-            var x = bounds.minX
-            for item in line.items {
-                let size = subviews[item.index].sizeThatFits(.unspecified)
-                subviews[item.index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-            y += line.height + spacing
-        }
-    }
-
-    private struct LineItem { var index: Int; var width: CGFloat }
-    private struct Line { var items: [LineItem]; var height: CGFloat }
-
-    private func layoutLines(in maxWidth: CGFloat, subviews: Subviews) -> [Line] {
-        var lines: [Line] = []
-        var current = Line(items: [], height: 0)
-        var x: CGFloat = 0
-        for i in subviews.indices {
-            let size = subviews[i].sizeThatFits(.unspecified)
-            if x + size.width > maxWidth && !current.items.isEmpty {
-                lines.append(current)
-                current = Line(items: [], height: 0)
-                x = 0
-            }
-            current.items.append(LineItem(index: i, width: size.width))
-            current.height = max(current.height, size.height)
-            x += size.width + spacing
-        }
-        if !current.items.isEmpty { lines.append(current) }
-        return lines
     }
 }
 
@@ -199,174 +133,234 @@ struct FlowLayout: Layout {
 
 struct RenamePageSheet: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme
-
+    @Environment(\.dismiss) private var dismiss
     let page: Page
-    @State private var title: String = ""
+    @State private var newTitle: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
-            SheetHeader(title: "重命名", subtitle: "将同步修改文件名与 front matter 的 title")
-            Form {
-                Section {
-                    TextField("新标题", text: $title)
-                } footer: {
-                    Text("原文件：\(((page.sourcePath as NSString).lastPathComponent))")
-                        .font(AppFont.monoCaption())
-                        .foregroundStyle(theme.inkTertiary)
-                }
+            SheetHeader(title: "重命名文章", subtitle: "日期前缀会自动保留")
+            Divider().background(theme.divider)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("新标题").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                TextField("新标题", text: $newTitle)
+                    .textFieldStyle(.roundedBorder)
+                Text("当前：\((page.sourcePath as NSString).lastPathComponent)")
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
             }
-            .formStyle(.grouped)
-            .scrollContentBackground(.hidden)
-
-            SheetFooter(confirm: "重命名", cancel: "取消", confirmDisabled: title.isEmpty) {
-                appState.renamePage(page, to: title)
+            .padding(20)
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "重命名", cancel: "取消", onConfirm: {
+                let v = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !v.isEmpty, v != page.title else { dismiss(); return }
+                appState.renamePage(page, to: v)
                 dismiss()
-            }
+            })
         }
-        .frame(width: 460, height: 280)
-        .background(theme.background)
-        .onAppear { title = page.title }
+        .frame(width: 440, height: 240)
+        .onAppear { newTitle = page.title }
     }
 }
 
-// MARK: - 相册管理
+// MARK: - 新建相册
 
 struct NewAlbumSheet: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme
-    @State private var title: String = ""
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String = ""
+    @State private var error: String? = nil
 
     var body: some View {
         VStack(spacing: 0) {
-            SheetHeader(title: "新建相册", subtitle: "在 content/albums/ 下创建")
-            Form {
-                Section {
-                    TextField("相册名", text: $title)
-                } footer: {
-                    Text("目录名会自动转为英文 slug。")
-                        .font(AppFont.caption())
-                        .foregroundStyle(theme.inkTertiary)
+            SheetHeader(title: "新建相册", subtitle: "相簿名字, 用 slug 作为目录名")
+            Divider().background(theme.divider)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("名称").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                TextField("如: 我的旅行 / Travel 2026", text: $name)
+                    .textFieldStyle(.roundedBorder)
+                if let error = error {
+                    Text(error).font(AppFont.caption()).foregroundStyle(.red)
                 }
+                Text("会自动创建 `content/albums/<slug>/index.md`")
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
             }
-            .formStyle(.grouped)
-            .scrollContentBackground(.hidden)
-            SheetFooter(confirm: "创建", cancel: "取消", confirmDisabled: title.isEmpty) {
-                appState.createAlbum(title: title)
-                dismiss()
-            }
+            .padding(20)
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "创建", cancel: "取消", onConfirm: create)
         }
         .frame(width: 460, height: 240)
-        .background(theme.background)
+    }
+
+    private func create() {
+        let v = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { error = "请输入名称"; return }
+        appState.createAlbum(title: v)
+        dismiss()
     }
 }
 
+// MARK: - 重命名相册
+
 struct RenameAlbumSheet: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme
+    @Environment(\.dismiss) private var dismiss
     let album: Page
-    @State private var title: String = ""
-    @State private var oldName: String = ""
+    @State private var newName: String = ""
+    @State private var error: String? = nil
 
     var body: some View {
         VStack(spacing: 0) {
             SheetHeader(title: "重命名相册", subtitle: album.title)
-            Form {
-                Section {
-                    TextField("新相册名", text: $title)
-                } footer: {
-                    Text("目录 slug 将重新生成。")
-                        .font(AppFont.caption())
+            Divider().background(theme.divider)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("新名称").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                TextField("新名称", text: $newName)
+                    .textFieldStyle(.roundedBorder)
+                if let error = error {
+                    Text(error).font(AppFont.caption()).foregroundStyle(.red)
                 }
             }
-            .formStyle(.grouped)
-            .scrollContentBackground(.hidden)
-            SheetFooter(confirm: "重命名", cancel: "取消", confirmDisabled: title.isEmpty) {
-                appState.renameAlbum(oldName: oldName, newTitle: title)
-                dismiss()
-            }
+            .padding(20)
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "重命名", cancel: "取消", onConfirm: doRename)
         }
-        .frame(width: 460, height: 240)
-        .background(theme.background)
-        .onAppear {
-            title = album.title
-            oldName = (album.sourcePath as NSString).deletingLastPathComponent
-                .components(separatedBy: "/").last ?? album.title
-        }
+        .frame(width: 460, height: 220)
+        .onAppear { newName = album.title }
+    }
+
+    private func doRename() {
+        let v = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { error = "请输入名称"; return }
+        // album.sourcePath = /.../content/albums/<slug>/index.md
+        let oldSlug = (album.sourcePath as NSString).deletingLastPathComponent.components(separatedBy: "/").last ?? ""
+        appState.renameAlbum(oldName: oldSlug, newTitle: v)
+        dismiss()
     }
 }
 
-// MARK: - 相册详情
+// MARK: - 重命名媒体文件
 
-struct AlbumDetailView: View {
-    let album: Page
+struct RenameMediaSheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
+    @Environment(\.dismiss) private var dismiss
+    let albumName: String
+    let oldName: String
+    let onDone: (String) -> Void
+    @State private var newName: String = ""
+    @State private var error: String? = nil
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SheetHeader(title: "重命名文件", subtitle: oldName)
+            Divider().background(theme.divider)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("新文件名").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                TextField("新文件名", text: $newName)
+                    .textFieldStyle(.roundedBorder)
+                if let error = error {
+                    Text(error).font(AppFont.caption()).foregroundStyle(.red)
+                }
+                Text("扩展名会自动保留（可手动改）")
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
+            }
+            .padding(20)
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "重命名", cancel: "取消", onConfirm: doRename)
+        }
+        .frame(width: 460, height: 240)
+        .onAppear {
+            newName = oldName
+        }
+    }
+
+    private func doRename() {
+        let v = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { error = "请输入名称"; return }
+        onDone(v)
+        dismiss()
+    }
+}
+
+// MARK: - 相册详情 (网格视图)
+
+struct AlbumDetailView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
+    let album: Page
+
     @State private var media: [AlbumManager.MediaInfo] = []
     @State private var search: String = ""
     @State private var selectedMedia: String? = nil
     @State private var showAddSheet: Bool = false
     @State private var renameTarget: String? = nil
     @State private var renameValue: String = ""
-    @State private var albumName: String = ""
+    @State private var confirmDelete: String? = nil
+    @State private var showRenameAlbum: Bool = false
+    @State private var showDeleteAlbum: Bool = false
 
-    var filtered: [AlbumManager.MediaInfo] {
-        guard !search.isEmpty else { return media }
-        return media.filter { $0.filename.localizedCaseInsensitiveContains(search) }
+    private var albumName: String {
+        (album.sourcePath as NSString).deletingLastPathComponent.components(separatedBy: "/").last ?? ""
+    }
+
+    private var filtered: [AlbumManager.MediaInfo] {
+        let q = search.trimmingCharacters(in: .whitespaces).lowercased()
+        if q.isEmpty { return media }
+        return media.filter { $0.filename.lowercased().contains(q) }
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(album.title)
-                        .font(AppFont.title(size: 18))
-                        .foregroundStyle(theme.ink)
-                    Text(album.url)
-                        .font(AppFont.monoCaption())
-                        .foregroundStyle(theme.inkTertiary)
-                }
+            // 顶部条
+            HStack(spacing: 10) {
+                Image(systemName: "photo.stack").foregroundStyle(theme.accent)
+                Text(album.title.isEmpty ? albumName : album.title)
+                    .font(AppFont.headline()).foregroundStyle(theme.ink)
+                Text("· \(media.count) 项")
+                    .font(AppFont.caption()).foregroundStyle(theme.inkTertiary)
                 Spacer()
+                TextField("搜索文件名…", text: $search)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 200)
                 Button {
                     showAddSheet = true
                 } label: {
                     Label("添加", systemImage: "plus")
                 }
-                Button {
-                    appState.renameAlbumTarget = album
+                .buttonStyle(.borderedProminent)
+                Menu {
+                    Button("重命名相簿") { showRenameAlbum = true }
+                    Divider()
+                    Button(role: .destructive) {
+                        showDeleteAlbum = true
+                    } label: { Text("删除相簿 (含所有媒体)") }
                 } label: {
-                    Label("重命名", systemImage: "pencil")
+                    Image(systemName: "ellipsis.circle")
                 }
-                Button(role: .destructive) {
-                    appState.deleteAlbum(name: albumName)
-                } label: {
-                    Label("删除", systemImage: "trash")
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            Divider().background(theme.divider)
+
+            if filtered.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: media.isEmpty ? "photo.stack" : "magnifyingglass")
+                        .font(.system(size: 36))
+                        .foregroundStyle(theme.inkTertiary)
+                    Text(media.isEmpty ? "相簿为空,点击 + 添加图片或视频" : "无匹配项")
+                        .font(AppFont.caption()).foregroundStyle(theme.inkTertiary)
                 }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(theme.background)
-            .overlay(Rectangle().fill(theme.divider).frame(height: 0.5), alignment: .bottom)
-
-            // 工具栏：搜索
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(theme.inkTertiary)
-                TextField("搜索文件名…", text: $search)
-                    .textFieldStyle(.roundedBorder)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(theme.cardBackground)
-
-            if media.isEmpty {
-                EmptyState(icon: "photo.stack", text: "相册为空,点击 + 添加图片或视频")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 12)], spacing: 12) {
                         ForEach(filtered, id: \.filename) { item in
                             mediaCell(for: item)
                         }
@@ -399,6 +393,19 @@ struct AlbumDetailView: View {
                 reload()
             }
         }
+        .sheet(isPresented: $showRenameAlbum) {
+            RenameAlbumSheet(album: album)
+        }
+        .confirmationDialog("确认删除相簿?",
+                             isPresented: $showDeleteAlbum,
+                             titleVisibility: .visible) {
+            Button("删除相簿 (含 \(media.count) 个文件)", role: .destructive) {
+                appState.deleteAlbum(name: albumName)
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("此操作不可撤销:\n\(albumName)")
+        }
     }
 
     @ViewBuilder
@@ -406,166 +413,373 @@ struct AlbumDetailView: View {
         let dir = AlbumManager.albumDir(projectRoot: appState.project?.root.path ?? "", albumName: albumName)
         let fullPath: String = (dir as NSString).appendingPathComponent(item.filename)
         let isSelected: Bool = (selectedMedia == item.filename)
-        MediaThumbView(
-            item: item,
-            isSelected: isSelected,
-            onDelete: { handleDelete(filename: item.filename) },
-            onRename: { handleRename(filename: item.filename) },
-            fullPath: fullPath
-        )
-        .onTapGesture {
-            selectedMedia = item.filename
-        }
-    }
-
-    private func handleDelete(filename: String) {
-        appState.removeMedia(albumName: albumName, filename: filename)
-        reload()
-    }
-
-    private func handleRename(filename: String) {
-        renameTarget = filename
-        renameValue = filename
-    }
-
-    private func reload() {
-        // 从 album.sourcePath 提取相册名
-        let dir = (album.sourcePath as NSString).deletingLastPathComponent
-        albumName = (dir as NSString).lastPathComponent
-        media = appState.albumMediaList(name: albumName)
-    }
-}
-
-struct RenameTarget: Identifiable {
-    let filename: String
-    var id: String { filename }
-}
-
-struct RenameMediaSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.theme) private var theme
-    let albumName: String
-    let oldName: String
-    let onSave: (String) -> Void
-    @State private var newName: String = ""
-
-    var body: some View {
         VStack(spacing: 0) {
-            SheetHeader(title: "重命名", subtitle: albumName)
-            Form {
-                Section {
-                    TextField("新文件名", text: $newName)
-                } footer: {
-                    Text("原文件名：\(oldName)")
-                        .font(AppFont.monoCaption())
-                        .foregroundStyle(theme.inkTertiary)
-                }
-            }
-            .formStyle(.grouped)
-            .scrollContentBackground(.hidden)
-            SheetFooter(confirm: "保存", cancel: "取消", confirmDisabled: newName.isEmpty) {
-                onSave(newName)
-                dismiss()
-            }
-        }
-        .frame(width: 460, height: 240)
-        .background(theme.background)
-        .onAppear { newName = oldName }
-    }
-}
-
-struct MediaThumbView: View {
-    let item: AlbumManager.MediaInfo
-    let isSelected: Bool
-    let onDelete: () -> Void
-    let onRename: () -> Void
-    let fullPath: String    // 绝对路径,用于加载图片
-    @Environment(\.theme) private var theme
-    @State private var hovered = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(theme.cardBackground)
-                if item.isImage, let img = NSImage(contentsOfFile: fullPath) {
-                    Image(nsImage: img)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                } else if item.isVideo {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.black.opacity(0.4))
-                        Image(systemName: "play.rectangle.fill")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.white)
-                    }
-                } else {
-                    Image(systemName: "doc")
-                        .font(.system(size: 32))
-                        .foregroundStyle(theme.inkTertiary)
-                }
-            }
-            .frame(height: 110)
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(isSelected ? theme.accent : Color.clear, lineWidth: 2)
+            MediaThumbView(
+                item: item,
+                isSelected: isSelected,
+                onDelete: { confirmDelete = item.filename },
+                onRename: {
+                    renameTarget = item.filename
+                    renameValue = item.filename
+                },
+                fullPath: fullPath
             )
+            .onTapGesture { selectedMedia = item.filename }
             Text(item.filename)
                 .font(AppFont.caption())
                 .foregroundStyle(theme.inkSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Text(byteFormat(item.size))
-                .font(AppFont.monoCaption(size: 10))
-                .foregroundStyle(theme.inkTertiary)
+                .padding(.horizontal, 6).padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .contextMenu {
-            Button("重命名") { onRename() }
-            Button("删除", role: .destructive) { onDelete() }
+        .background(theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(isSelected ? theme.accent : theme.divider, lineWidth: isSelected ? 1.5 : 0.5)
+        )
+        .alert("确认删除?", isPresented: Binding(
+            get: { confirmDelete == item.filename },
+            set: { if !$0 { confirmDelete = nil } }
+        )) {
+            Button("删除", role: .destructive) {
+                appState.removeMedia(albumName: albumName, filename: item.filename)
+                reload()
+                confirmDelete = nil
+            }
+            Button("取消", role: .cancel) { confirmDelete = nil }
+        } message: {
+            Text(item.filename)
         }
-        .scaleEffect(hovered ? 1.02 : 1.0)
-        .animation(.easeOut(duration: 0.1), value: hovered)
-        .onHover { hovered = $0 }
     }
 
-    private func byteFormat(_ bytes: Int64) -> String {
-        let f = ByteCountFormatter()
-        f.allowedUnits = [.useKB, .useMB, .useGB]
-        f.countStyle = .file
-        return f.string(fromByteCount: bytes)
+    private func reload() {
+        let dir = (album.sourcePath as NSString).deletingLastPathComponent
+        let name = (dir as NSString).lastPathComponent
+        media = appState.albumMediaList(name: name)
     }
 }
 
-// 为 MediaThumbView 提供访问 AppState 的兜底（用 shared 单例）
-// (不再需要：fullPath 已直接传入)
+private struct RenameTarget: Identifiable, Equatable {
+    let filename: String
+    var id: String { filename }
+}
 
-// MARK: - 插件开关
+// MARK: - 媒体缩略图 (hover 出按钮)
+
+struct MediaThumbView: View {
+    @Environment(\.theme) private var theme
+    let item: AlbumManager.MediaInfo
+    let isSelected: Bool
+    let onDelete: () -> Void
+    let onRename: () -> Void
+    let fullPath: String
+    @State private var hovered: Bool = false
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            ZStack {
+                Rectangle()
+                    .fill(theme.surface)
+                    .frame(height: 110)
+                if item.isImage {
+                    if let img = NSImage(contentsOfFile: fullPath) {
+                        Image(nsImage: img)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 110)
+                            .clipped()
+                    } else {
+                        Image(systemName: "photo")
+                            .font(.system(size: 28))
+                            .foregroundStyle(theme.inkTertiary)
+                    }
+                } else if item.isVideo {
+                    ZStack {
+                        Rectangle().fill(Color.black.opacity(0.06))
+                        VStack(spacing: 4) {
+                            Image(systemName: "play.rectangle.fill")
+                                .font(.system(size: 28))
+                                .foregroundStyle(theme.accent)
+                            Text((item.filename as NSString).pathExtension.uppercased())
+                                .font(AppFont.monoCaption())
+                                .foregroundStyle(theme.inkSecondary)
+                        }
+                    }
+                    .frame(height: 110)
+                } else {
+                    VStack {
+                        Image(systemName: "doc")
+                            .font(.system(size: 28))
+                            .foregroundStyle(theme.inkTertiary)
+                        Text((item.filename as NSString).pathExtension)
+                            .font(AppFont.monoCaption())
+                            .foregroundStyle(theme.inkTertiary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 110)
+            .clipped()
+
+            if hovered {
+                HStack(spacing: 4) {
+                    Button(action: onRename) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 11, weight: .semibold))
+                            .padding(4)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("重命名")
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 11, weight: .semibold))
+                            .padding(4)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("删除")
+                }
+                .padding(6)
+            }
+        }
+        .frame(height: 110)
+        .onHover { hovered = $0 }
+    }
+}
+
+// MARK: - 标签 / 分类 全量管理
+
+struct TagManagerView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
+    @State private var renameTarget: String? = nil
+    @State private var renameValue: String = ""
+    @State private var confirmDelete: String? = nil
+
+    private struct Row: Identifiable {
+        let name: String
+        let count: Int
+        var id: String { name }
+    }
+
+    private var rows: [Row] {
+        guard let p = appState.project else { return [] }
+        return p.allTags.keys.sorted().map { Row(name: $0, count: p.allTags[$0]?.count ?? 0) }
+    }
+
+    var body: some View {
+        if rows.isEmpty {
+            EmptyState(icon: "tag", text: "还没有任何标签\n在文章上编辑元数据即可添加标签")
+        } else {
+            List {
+                Section {
+                    ForEach(rows) { row in
+                        rowView(row)
+                    }
+                } header: {
+                    ListHeader(icon: "tag", title: "标签", count: rows.count)
+                }
+            }
+            .listStyle(.inset)
+            .alert("重命名标签", isPresented: Binding(
+                get: { renameTarget != nil },
+                set: { if !$0 { renameTarget = nil } }
+            )) {
+                TextField("新名称", text: $renameValue)
+                Button("确定") {
+                    if let old = renameTarget {
+                        let new = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !new.isEmpty, new != old {
+                            appState.renameTagEverywhere(from: old, to: new)
+                        }
+                    }
+                    renameTarget = nil
+                }
+                Button("取消", role: .cancel) { renameTarget = nil }
+            } message: {
+                Text("会把所有文章 front matter 里的 `\(renameTarget ?? "")` 替换为 `\(renameValue)`")
+            }
+            .alert("确认删除标签?",
+                   isPresented: Binding(
+                    get: { confirmDelete != nil },
+                    set: { if !$0 { confirmDelete = nil } }
+                   )) {
+                Button("从所有文章中移除", role: .destructive) {
+                    if let t = confirmDelete { appState.removeTagEverywhere(t) }
+                    confirmDelete = nil
+                }
+                Button("取消", role: .cancel) { confirmDelete = nil }
+            } message: {
+                Text("`\(confirmDelete ?? "")` 会从所有文章的 front matter 中移除。")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func rowView(_ row: Row) -> some View {
+        HStack {
+            Image(systemName: "tag.fill")
+                .foregroundStyle(theme.accent)
+                .frame(width: 18)
+            Text(row.name)
+                .font(AppFont.body())
+                .foregroundStyle(theme.ink)
+            Spacer()
+            Text("\(row.count)")
+                .font(AppFont.monoCaption())
+                .foregroundStyle(theme.inkTertiary)
+                .padding(.horizontal, 8).padding(.vertical, 2)
+                .background(theme.tagBackground)
+                .clipShape(Capsule())
+        }
+        .contextMenu {
+            Button("重命名") {
+                renameTarget = row.name
+                renameValue = row.name
+            }
+            Button("复制名称") {
+                let pb = NSPasteboard.general
+                pb.clearContents()
+                pb.setString(row.name, forType: .string)
+            }
+            Divider()
+            Button(role: .destructive) {
+                confirmDelete = row.name
+            } label: { Text("从所有文章中移除") }
+        }
+    }
+}
+
+struct CategoryManagerView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
+    @State private var renameTarget: String? = nil
+    @State private var renameValue: String = ""
+    @State private var confirmDelete: String? = nil
+
+    private struct Row: Identifiable {
+        let name: String
+        let count: Int
+        var id: String { name }
+    }
+
+    private var rows: [Row] {
+        guard let p = appState.project else { return [] }
+        return p.allCategories.keys.sorted().map { Row(name: $0, count: p.allCategories[$0]?.count ?? 0) }
+    }
+
+    var body: some View {
+        if rows.isEmpty {
+            EmptyState(icon: "folder", text: "还没有任何分类\n在文章上编辑元数据即可添加分类")
+        } else {
+            List {
+                Section {
+                    ForEach(rows) { row in
+                        rowView(row)
+                    }
+                } header: {
+                    ListHeader(icon: "folder", title: "分类", count: rows.count)
+                }
+            }
+            .listStyle(.inset)
+            .alert("重命名分类", isPresented: Binding(
+                get: { renameTarget != nil },
+                set: { if !$0 { renameTarget = nil } }
+            )) {
+                TextField("新名称", text: $renameValue)
+                Button("确定") {
+                    if let old = renameTarget {
+                        let new = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !new.isEmpty, new != old {
+                            appState.renameCategoryEverywhere(from: old, to: new)
+                        }
+                    }
+                    renameTarget = nil
+                }
+                Button("取消", role: .cancel) { renameTarget = nil }
+            } message: {
+                Text("会把所有文章 front matter 里的 `\(renameTarget ?? "")` 替换为 `\(renameValue)`")
+            }
+            .alert("确认删除分类?",
+                   isPresented: Binding(
+                    get: { confirmDelete != nil },
+                    set: { if !$0 { confirmDelete = nil } }
+                   )) {
+                Button("从所有文章中移除", role: .destructive) {
+                    if let c = confirmDelete { appState.removeCategoryEverywhere(c) }
+                    confirmDelete = nil
+                }
+                Button("取消", role: .cancel) { confirmDelete = nil }
+            } message: {
+                Text("`\(confirmDelete ?? "")` 会从所有文章的 front matter 中移除。")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func rowView(_ row: Row) -> some View {
+        HStack {
+            Image(systemName: "folder.fill")
+                .foregroundStyle(theme.accent)
+                .frame(width: 18)
+            Text(row.name)
+                .font(AppFont.body())
+                .foregroundStyle(theme.ink)
+            Spacer()
+            Text("\(row.count)")
+                .font(AppFont.monoCaption())
+                .foregroundStyle(theme.inkTertiary)
+                .padding(.horizontal, 8).padding(.vertical, 2)
+                .background(theme.tagBackground)
+                .clipShape(Capsule())
+        }
+        .contextMenu {
+            Button("重命名") {
+                renameTarget = row.name
+                renameValue = row.name
+            }
+            Button("复制名称") {
+                let pb = NSPasteboard.general
+                pb.clearContents()
+                pb.setString(row.name, forType: .string)
+            }
+            Divider()
+            Button(role: .destructive) {
+                confirmDelete = row.name
+            } label: { Text("从所有文章中移除") }
+        }
+    }
+}
+
+// MARK: - 插件管理 (开关)
 
 struct PluginListView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
-    @State private var plugins: [PluginInfo] = []
+    @State private var refresh: Bool = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            ListHeader(title: "插件", subtitle: "scripts/*.js  ·  关闭后不会被构建加载",
-                       icon: "puzzlepiece",
-                       trailing: AnyView(EmptyView()))
-            if plugins.isEmpty {
-                EmptyState(icon: "puzzlepiece", text: "将 .js 脚本放入 scripts/ 目录")
+        let items = appState.listPlugins()
+        VStack(alignment: .leading, spacing: 0) {
+            ListHeader(icon: "puzzlepiece", title: "插件", count: items.count)
+            if items.isEmpty {
+                EmptyState(icon: "puzzlepiece", text: "项目下没有脚本。\n在 `scripts/` 目录放置 `*.js` 文件即可。")
             } else {
-                List(plugins) { plugin in
+                List(items) { item in
                     HStack {
-                        Image(systemName: "curlybraces")
-                            .foregroundStyle(theme.accent)
+                        Image(systemName: item.enabled ? "checkmark.circle.fill" : "circle.dashed")
+                            .foregroundStyle(item.enabled ? theme.accent : theme.inkTertiary)
+                            .frame(width: 18)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(plugin.name)
+                            Text(item.name)
                                 .font(AppFont.body())
                                 .foregroundStyle(theme.ink)
-                            Text(plugin.path)
+                            Text((item.path as NSString).lastPathComponent)
                                 .font(AppFont.monoCaption())
                                 .foregroundStyle(theme.inkTertiary)
                                 .lineLimit(1)
@@ -573,112 +787,88 @@ struct PluginListView: View {
                         }
                         Spacer()
                         Toggle("", isOn: Binding(
-                            get: { plugin.enabled },
-                            set: { appState.setPluginEnabled(name: plugin.name, enabled: $0); reload() }
+                            get: { item.enabled },
+                            set: { appState.setPluginEnabled(name: item.name, enabled: $0); refresh.toggle() }
                         ))
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
                         .labelsHidden()
+                        .toggleStyle(.switch)
                     }
                     .padding(.vertical, 4)
                 }
+                .listStyle(.inset)
             }
         }
-        .onAppear(perform: reload)
-        .onChange(of: appState.project?.config.disabledPlugins) { _, _ in reload() }
-    }
-
-    private func reload() {
-        plugins = appState.listPlugins()
+        .id(refresh) // 强制刷新列表
     }
 }
 
-// MARK: - 分类/标签管理
+// MARK: - 简单 flow chips (用于标签/分类编辑)
 
-struct TagManagerView: View {
-    @EnvironmentObject var appState: AppState
+struct FlowChips: View {
     @Environment(\.theme) private var theme
-    @State private var newTag: String = ""
+    let items: [String]
+    let onRemove: (String) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            ListHeader(title: "标签", subtitle: "出现在文章 front matter 中的所有标签",
-                       icon: "tag",
-                       trailing: AnyView(EmptyView()))
-            HStack {
-                TextField("新建标签", text: $newTag)
-                    .onSubmit { addTag() }
-                Button("添加") { addTag() }
-                    .disabled(newTag.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            .padding(12)
-            if let project = appState.project, !project.allTags.isEmpty {
-                List(Array(project.allTags.keys).sorted(), id: \.self) { tag in
-                    HStack {
-                        Text("#\(tag)")
-                            .font(AppFont.body())
-                            .foregroundStyle(theme.ink)
-                        Spacer()
-                        Text("\(project.allTags[tag]?.count ?? 0) 篇")
-                            .font(AppFont.monoCaption())
+        FlowLayout(spacing: 6) {
+            ForEach(items, id: \.self) { item in
+                HStack(spacing: 4) {
+                    Text(item)
+                        .font(AppFont.caption())
+                        .foregroundStyle(theme.ink)
+                    Button {
+                        onRemove(item)
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
                             .foregroundStyle(theme.inkTertiary)
                     }
+                    .buttonStyle(.plain)
                 }
-            } else {
-                EmptyState(icon: "tag", text: "暂无标签")
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(theme.tagBackground)
+                .clipShape(Capsule())
             }
         }
-    }
-
-    private func addTag() {
-        let v = newTag.trimmingCharacters(in: .whitespaces)
-        guard !v.isEmpty else { return }
-        appState.addTag(v)
-        newTag = ""
     }
 }
 
-struct CategoryManagerView: View {
-    @EnvironmentObject var appState: AppState
-    @Environment(\.theme) private var theme
-    @State private var newCategory: String = ""
+/// 简版 flow layout, 把 children 横向铺, 必要时换行。
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
 
-    var body: some View {
-        VStack(spacing: 0) {
-            ListHeader(title: "分类", subtitle: "出现在文章 front matter 中的所有分类",
-                       icon: "folder",
-                       trailing: AnyView(EmptyView()))
-            HStack {
-                TextField("新建分类", text: $newCategory)
-                    .onSubmit { addCategory() }
-                Button("添加") { addCategory() }
-                    .disabled(newCategory.trimmingCharacters(in: .whitespaces).isEmpty)
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 0
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowH: CGFloat = 0
+        for v in subviews {
+            let s = v.sizeThatFits(.unspecified)
+            if x + s.width > width, x > 0 {
+                x = 0
+                y += rowH + spacing
+                rowH = 0
             }
-            .padding(12)
-            if let project = appState.project, !project.allCategories.isEmpty {
-                List(Array(project.allCategories.keys).sorted(), id: \.self) { cat in
-                    HStack {
-                        Image(systemName: "folder")
-                            .foregroundStyle(theme.inkSecondary)
-                        Text(cat)
-                            .font(AppFont.body())
-                            .foregroundStyle(theme.ink)
-                        Spacer()
-                        Text("\(project.allCategories[cat]?.count ?? 0) 篇")
-                            .font(AppFont.monoCaption())
-                            .foregroundStyle(theme.inkTertiary)
-                    }
-                }
-            } else {
-                EmptyState(icon: "folder", text: "暂无分类")
-            }
+            x += s.width + spacing
+            rowH = max(rowH, s.height)
         }
+        return CGSize(width: width, height: y + rowH)
     }
 
-    private func addCategory() {
-        let v = newCategory.trimmingCharacters(in: .whitespaces)
-        guard !v.isEmpty else { return }
-        appState.addTag(v)  // 同样行为
-        newCategory = ""
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var rowH: CGFloat = 0
+        for v in subviews {
+            let s = v.sizeThatFits(.unspecified)
+            if x + s.width > bounds.maxX, x > bounds.minX {
+                x = bounds.minX
+                y += rowH + spacing
+                rowH = 0
+            }
+            v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
+            x += s.width + spacing
+            rowH = max(rowH, s.height)
+        }
     }
 }

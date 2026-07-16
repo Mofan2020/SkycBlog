@@ -23,6 +23,7 @@ final class AppState: ObservableObject {
     @Published var renameAlbumTarget: Page? = nil
     @Published var newAlbumSheet: Bool = false
     @Published var selectedAlbumID: String? = nil
+    @Published var selectedAlbumForDetail: Page? = nil
     @Published var consoleVisible: Bool = true
     @Published var selection: LibrarySection = .posts
     @Published var selectedPageID: String? = nil
@@ -316,6 +317,11 @@ final class AppState: ObservableObject {
         return AlbumManager.listMedia(in: dir)
     }
 
+    func openAlbumDetail(album: Page) {
+        selectedAlbumForDetail = album
+        selectedAlbumID = album.id
+    }
+
     // MARK: - 插件
 
     func listPlugins() -> [PluginInfo] {
@@ -351,11 +357,145 @@ final class AppState: ObservableObject {
 
     // MARK: - 分类 / 标签
 
-    func addTag(_ tag: String) {
-        guard let project = project, !project.allTags.keys.contains(tag) else { return }
-        // 在 _posts/_drafts/pages 中找一篇空 front matter 加上,或更新 frontMatter
-        // 更友好的做法：让用户逐篇编辑；这里不自动注入,只作为 UI 占位（暂未做"全局标签池"）
-        log(.info("提示：在文章上添加标签 #\(tag) 即可使用"))
+    /// 重命名一个标签：对所有 markdown front matter 中的 `tags` 列表做替换。
+    func renameTagEverywhere(from old: String, to new: String) {
+        guard let project = project else { return }
+        var changed = 0
+        let sources = collectAllMarkdownSources(projectRoot: project.root.path)
+        for path in sources {
+            do {
+                let text = try String(contentsOfFile: path, encoding: .utf8)
+                let (fm, body) = try PostManager.parse(text)
+                var fmLocal = fm
+                var tags = fmLocal.tags
+                var touched = false
+                for i in tags.indices where tags[i] == old {
+                    tags[i] = new
+                    touched = true
+                }
+                // 删重复
+                if touched {
+                    var seen = Set<String>()
+                    tags = tags.filter { seen.insert($0).inserted }
+                    fmLocal.tags = tags
+                    try PostManager.render(fmLocal, body: body).write(toFile: path, atomically: true, encoding: .utf8)
+                    changed += 1
+                }
+            } catch {
+                log(.error("更新 \(path) 失败：\(error.localizedDescription)"))
+            }
+        }
+        project.refresh()
+        log(.success("已把标签 `\(old)` → `\(new)` (涉及 \(changed) 篇文章)"))
+    }
+
+    func removeTagEverywhere(_ tag: String) {
+        guard let project = project else { return }
+        var changed = 0
+        let sources = collectAllMarkdownSources(projectRoot: project.root.path)
+        for path in sources {
+            do {
+                let text = try String(contentsOfFile: path, encoding: .utf8)
+                let (fm, body) = try PostManager.parse(text)
+                var fmLocal = fm
+                let before = fmLocal.tags.count
+                let after = fmLocal.tags.filter { $0 != tag }
+                if after.count != before {
+                    fmLocal.tags = after
+                    try PostManager.render(fmLocal, body: body).write(toFile: path, atomically: true, encoding: .utf8)
+                    changed += 1
+                }
+            } catch {
+                log(.error("更新 \(path) 失败：\(error.localizedDescription)"))
+            }
+        }
+        project.refresh()
+        log(.success("已从 \(changed) 篇文章移除标签 `\(tag)`"))
+    }
+
+    func renameCategoryEverywhere(from old: String, to new: String) {
+        guard let project = project else { return }
+        var changed = 0
+        let sources = collectAllMarkdownSources(projectRoot: project.root.path)
+        for path in sources {
+            do {
+                let text = try String(contentsOfFile: path, encoding: .utf8)
+                let (fm, body) = try PostManager.parse(text)
+                var fmLocal = fm
+                var cats = fmLocal.categories
+                var touched = false
+                for i in cats.indices where cats[i] == old {
+                    cats[i] = new
+                    touched = true
+                }
+                if touched {
+                    var seen = Set<String>()
+                    cats = cats.filter { seen.insert($0).inserted }
+                    fmLocal.categories = cats
+                    try PostManager.render(fmLocal, body: body).write(toFile: path, atomically: true, encoding: .utf8)
+                    changed += 1
+                }
+            } catch {
+                log(.error("更新 \(path) 失败：\(error.localizedDescription)"))
+            }
+        }
+        project.refresh()
+        log(.success("已把分类 `\(old)` → `\(new)` (涉及 \(changed) 篇文章)"))
+    }
+
+    func removeCategoryEverywhere(_ cat: String) {
+        guard let project = project else { return }
+        var changed = 0
+        let sources = collectAllMarkdownSources(projectRoot: project.root.path)
+        for path in sources {
+            do {
+                let text = try String(contentsOfFile: path, encoding: .utf8)
+                let (fm, body) = try PostManager.parse(text)
+                var fmLocal = fm
+                let before = fmLocal.categories.count
+                let after = fmLocal.categories.filter { $0 != cat }
+                if after.count != before {
+                    fmLocal.categories = after
+                    try PostManager.render(fmLocal, body: body).write(toFile: path, atomically: true, encoding: .utf8)
+                    changed += 1
+                }
+            } catch {
+                log(.error("更新 \(path) 失败：\(error.localizedDescription)"))
+            }
+        }
+        project.refresh()
+        log(.success("已从 \(changed) 篇文章移除分类 `\(cat)`"))
+    }
+
+    /// 收集项目里所有 markdown 源文件（_posts、_drafts、pages、albums/*/index.md）。
+    private func collectAllMarkdownSources(projectRoot: String) -> [String] {
+        let fm = FileManager.default
+        var out: [String] = []
+        let dirs = [
+            "\(projectRoot)/content/_posts",
+            "\(projectRoot)/content/_drafts",
+            "\(projectRoot)/content/pages",
+        ]
+        for d in dirs where fm.fileExists(atPath: d) {
+            if let files = try? fm.contentsOfDirectory(atPath: d) {
+                for f in files where f.hasSuffix(".md") {
+                    out.append((d as NSString).appendingPathComponent(f))
+                }
+            }
+        }
+        let albumRoot = "\(projectRoot)/content/albums"
+        if fm.fileExists(atPath: albumRoot), let albums = try? fm.contentsOfDirectory(atPath: albumRoot) {
+            for a in albums {
+                let dir = (albumRoot as NSString).appendingPathComponent(a)
+                var isDir: ObjCBool = false
+                fm.fileExists(atPath: dir, isDirectory: &isDir)
+                if isDir.boolValue {
+                    let idx = (dir as NSString).appendingPathComponent("index.md")
+                    if fm.fileExists(atPath: idx) { out.append(idx) }
+                }
+            }
+        }
+        return out
     }
 
     // MARK: - 日志

@@ -41,6 +41,12 @@ struct RootView: View {
                 .environmentObject(appState)
                 .themed()
         }
+        .sheet(item: Binding(get: { appState.selectedAlbumForDetail },
+                             set: { appState.selectedAlbumForDetail = $0 })) { album in
+            AlbumDetailView(album: album)
+                .environmentObject(appState)
+                .themed()
+        }
     }
 
     @ViewBuilder
