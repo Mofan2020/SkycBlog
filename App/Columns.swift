@@ -1,41 +1,33 @@
 import SwiftUI
 import SkycBlogCore
+import AppKit
 
 // MARK: - 左侧栏
 
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         List(selection: $appState.selection) {
             Section {
                 ForEach(LibrarySection.contentSections) { section in
                     NavigationLink(value: section) {
-                        Label {
-                            HStack {
-                                Text(section.rawValue)
-                                Spacer()
-                                Text("\(count(for: section))")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.inkTertiary)
-                            }
-                        } icon: {
-                            Image(systemName: section.systemImage)
-                        }
+                        sidebarRow(section: section, showCount: true)
                     }
                 }
             }
             Section("分类法") {
                 ForEach(LibrarySection.taxonomySections) { section in
                     NavigationLink(value: section) {
-                        Label(section.rawValue, systemImage: section.systemImage)
+                        sidebarRow(section: section, showCount: false)
                     }
                 }
             }
             Section("管理") {
                 ForEach(LibrarySection.adminSections) { section in
                     NavigationLink(value: section) {
-                        Label(section.rawValue, systemImage: section.systemImage)
+                        sidebarRow(section: section, showCount: false)
                     }
                 }
             }
@@ -44,6 +36,35 @@ struct SidebarView: View {
         .navigationTitle("SkycBlog")
         .safeAreaInset(edge: .bottom) {
             ServerControlStrip()
+        }
+    }
+
+    @ViewBuilder
+    private func sidebarRow(section: LibrarySection, showCount: Bool) -> some View {
+        if showCount {
+            Label {
+                HStack {
+                    Text(section.rawValue)
+                        .font(AppFont.body())
+                    Spacer()
+                    if count(for: section) > 0 {
+                        Text("\(count(for: section))")
+                            .font(AppFont.monoCaption())
+                            .foregroundStyle(theme.inkTertiary)
+                    }
+                }
+            } icon: {
+                Image(systemName: section.systemImage)
+                    .foregroundStyle(theme.inkSecondary)
+            }
+        } else {
+            Label {
+                Text(section.rawValue)
+                    .font(AppFont.body())
+            } icon: {
+                Image(systemName: section.systemImage)
+                    .foregroundStyle(theme.inkSecondary)
+            }
         }
     }
 
@@ -61,15 +82,16 @@ struct SidebarView: View {
 
 struct ServerControlStrip: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(appState.isServing ? Theme.success : Theme.inkTertiary)
+                .fill(appState.isServing ? theme.success : theme.inkTertiary)
                 .frame(width: 8, height: 8)
             Text(appState.isServing ? "预览运行中 · 8765" : "预览未启动")
-                .font(.caption)
-                .foregroundStyle(Theme.inkSecondary)
+                .font(AppFont.caption())
+                .foregroundStyle(theme.inkSecondary)
             Spacer()
             if appState.isServing {
                 Button("停止") { appState.stopServer() }
@@ -78,7 +100,7 @@ struct ServerControlStrip: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Theme.cardBackground)
+        .background(theme.cardBackground)
     }
 }
 
@@ -90,9 +112,9 @@ struct MiddleColumnView: View {
     var body: some View {
         Group {
             switch appState.selection {
-            case .posts:      PagesList(title: "文章", icon: "doc.text", pages: appState.project?.posts ?? [], allowNew: true, newIsPost: true)
+            case .posts:      PagesList(title: "文章", icon: "doc.text", pages: appState.project?.posts ?? [], allowNew: true)
             case .drafts:     PagesList(title: "草稿", icon: "pencil.and.outline", pages: appState.project?.drafts ?? [], allowNew: false)
-            case .pages:      PagesList(title: "页面", icon: "doc.richtext", pages: appState.project?.pages ?? [], allowNew: true, newIsPost: false)
+            case .pages:      PagesList(title: "页面", icon: "doc.richtext", pages: appState.project?.pages ?? [], allowNew: true)
             case .albums:     AlbumsList()
             case .tags:       TagList()
             case .categories: CategoryList()
@@ -108,11 +130,11 @@ struct MiddleColumnView: View {
 
 struct PagesList: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
     let title: String
     let icon: String
     let pages: [Page]
     let allowNew: Bool
-    var newIsPost: Bool = true
     @State private var search: String = ""
 
     var filtered: [Page] {
@@ -156,7 +178,15 @@ struct PagesList: View {
                     ForEach(filtered) { page in
                         PageRow(page: page)
                             .tag(page.id as String?)
+                            .listRowSeparator(.visible)
                             .contextMenu {
+                                Button("编辑元数据…") {
+                                    appState.metadataPageTarget = page
+                                }
+                                Button("重命名…") {
+                                    appState.renamePageTarget = page
+                                }
+                                Divider()
                                 Button("在 Finder 中显示") {
                                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: page.sourcePath)])
                                 }
@@ -173,13 +203,14 @@ struct PagesList: View {
 
 struct PageRow: View {
     let page: Page
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(page.title)
-                    .font(.system(.body))
-                    .foregroundStyle(Theme.ink)
+                    .font(AppFont.body())
+                    .foregroundStyle(theme.ink)
                     .lineLimit(1)
                 Spacer()
                 StatusBadge(status: page.extra["status"] as? String)
@@ -196,8 +227,8 @@ struct PageRow: View {
                     }
                 }
             }
-            .font(.caption)
-            .foregroundStyle(Theme.inkTertiary)
+            .font(AppFont.caption())
+            .foregroundStyle(theme.inkTertiary)
         }
         .padding(.vertical, 3)
     }
@@ -205,19 +236,21 @@ struct PageRow: View {
 
 struct StatusBadge: View {
     let status: String?
+    @Environment(\.theme) private var theme
     var body: some View {
         if let status, !status.isEmpty {
             Text(status)
-                .font(.system(.caption2, design: .monospaced))
+                .font(AppFont.monoCaption(size: 10))
                 .padding(.horizontal, 6).padding(.vertical, 2)
-                .background(Theme.tagBackground)
+                .background(theme.tagBackground)
                 .clipShape(Capsule())
-                .foregroundStyle(Theme.inkSecondary)
+                .foregroundStyle(theme.inkSecondary)
         }
     }
 }
 
 struct ListHeader: View {
+    @Environment(\.theme) private var theme
     let title: String
     let subtitle: String
     let icon: String
@@ -226,35 +259,37 @@ struct ListHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundStyle(Theme.inkSecondary)
+                .foregroundStyle(theme.inkSecondary)
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
-                    .font(.system(.title3, design: .serif).weight(.semibold))
+                    .font(AppFont.title(size: 18))
+                    .foregroundStyle(theme.ink)
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(Theme.inkTertiary)
+                    .font(AppFont.caption())
+                    .foregroundStyle(theme.inkTertiary)
             }
             Spacer()
             trailing
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Theme.background)
-        .overlay(Divider(), alignment: .bottom)
+        .background(theme.background)
+        .overlay(Rectangle().fill(theme.divider).frame(height: 0.5), alignment: .bottom)
     }
 }
 
 struct EmptyState: View {
+    @Environment(\.theme) private var theme
     let icon: String
     let text: String
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 32, weight: .light))
-                .foregroundStyle(Theme.inkTertiary)
+                .foregroundStyle(theme.inkTertiary)
             Text(text)
-                .font(.system(.body, design: .serif))
-                .foregroundStyle(Theme.inkSecondary)
+                .font(AppFont.body())
+                .foregroundStyle(theme.inkSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -264,18 +299,53 @@ struct EmptyState: View {
 
 struct AlbumsList: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
     var body: some View {
-        if let project = appState.project {
-            if project.albums.isEmpty {
-                EmptyState(icon: "photo.stack", text: "还没有相册")
-            } else {
-                List(project.albums) { album in
-                    HStack {
-                        Image(systemName: "photo.stack")
-                            .foregroundStyle(Theme.inkSecondary)
-                        VStack(alignment: .leading) {
-                            Text(album.title)
-                            Text(album.url).font(.caption).foregroundStyle(Theme.inkTertiary)
+        VStack(spacing: 0) {
+            ListHeader(
+                title: "相册",
+                subtitle: "\(appState.project?.albums.count ?? 0) 个",
+                icon: "photo.stack",
+                trailing: AnyView(
+                    HStack(spacing: 4) {
+                        Button {
+                            appState.newAlbumSheet = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("新建相册")
+                    }
+                )
+            )
+            if let project = appState.project {
+                if project.albums.isEmpty {
+                    EmptyState(icon: "photo.stack", text: "还没有相册,点击 + 新建")
+                } else {
+                    List(selection: $appState.selectedAlbumID) {
+                        ForEach(project.albums) { album in
+                            HStack {
+                                Image(systemName: "photo.stack")
+                                    .foregroundStyle(theme.inkSecondary)
+                                VStack(alignment: .leading) {
+                                    Text(album.title)
+                                        .font(AppFont.body())
+                                        .foregroundStyle(theme.ink)
+                                    Text(album.url)
+                                        .font(AppFont.monoCaption())
+                                        .foregroundStyle(theme.inkTertiary)
+                                }
+                                Spacer()
+                            }
+                            .tag(album.id as String?)
+                            .contextMenu {
+                                Button("重命名…") { appState.renameAlbumTarget = album }
+                                Button("删除", role: .destructive) {
+                                    let dir = (album.sourcePath as NSString).deletingLastPathComponent
+                                    let name = (dir as NSString).lastPathComponent
+                                    appState.deleteAlbum(name: name)
+                                }
+                            }
                         }
                     }
                 }
@@ -286,46 +356,23 @@ struct AlbumsList: View {
 
 struct TagList: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
     var body: some View {
-        if let project = appState.project, !project.allTags.isEmpty {
-            List(Array(project.allTags.keys).sorted(), id: \.self) { tag in
-                HStack {
-                    Text("#\(tag)")
-                    Spacer()
-                    Text("\(project.allTags[tag]?.count ?? 0)")
-                        .font(.caption)
-                        .foregroundStyle(Theme.inkTertiary)
-                }
-            }
-        } else {
-            EmptyState(icon: "tag", text: "暂无标签")
-        }
+        TagManagerView()
     }
 }
 
 struct CategoryList: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
     var body: some View {
-        if let project = appState.project, !project.allCategories.isEmpty {
-            List(Array(project.allCategories.keys).sorted(), id: \.self) { cat in
-                HStack {
-                    Image(systemName: "folder")
-                        .foregroundStyle(Theme.inkSecondary)
-                    Text(cat)
-                    Spacer()
-                    Text("\(project.allCategories[cat]?.count ?? 0)")
-                        .font(.caption)
-                        .foregroundStyle(Theme.inkTertiary)
-                }
-            }
-        } else {
-            EmptyState(icon: "folder", text: "暂无分类")
-        }
+        CategoryManagerView()
     }
 }
 
 struct AssetsList: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
     @State private var files: [URL] = []
     @State private var hovered: URL? = nil
 
@@ -344,6 +391,7 @@ struct AssetsList: View {
                     }
                     .padding(16)
                 }
+                .background(theme.background)
             }
         }
         .onAppear { reload() }
@@ -357,6 +405,7 @@ struct AssetsList: View {
 }
 
 struct AssetThumb: View {
+    @Environment(\.theme) private var theme
     let url: URL
     let isHovered: Bool
 
@@ -364,7 +413,7 @@ struct AssetThumb: View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Theme.cardBackground)
+                    .fill(theme.cardBackground)
                 if let img = NSImage(contentsOf: url) {
                     Image(nsImage: img)
                         .resizable()
@@ -373,13 +422,13 @@ struct AssetThumb: View {
                 } else {
                     Image(systemName: "doc")
                         .font(.system(size: 28))
-                        .foregroundStyle(Theme.inkTertiary)
+                        .foregroundStyle(theme.inkTertiary)
                 }
             }
             .frame(height: 80)
             Text(url.lastPathComponent)
-                .font(.caption)
-                .foregroundStyle(Theme.inkSecondary)
+                .font(AppFont.caption())
+                .foregroundStyle(theme.inkSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
@@ -390,41 +439,15 @@ struct AssetThumb: View {
 
 struct PluginList: View {
     @EnvironmentObject var appState: AppState
-    @State private var scripts: [URL] = []
-
+    @Environment(\.theme) private var theme
     var body: some View {
-        VStack(spacing: 0) {
-            ListHeader(title: "插件", subtitle: "scripts/*.js", icon: "puzzlepiece", trailing: AnyView(EmptyView()))
-            if scripts.isEmpty {
-                EmptyState(icon: "puzzlepiece", text: "将 .js 脚本放入 scripts/ 目录")
-            } else {
-                List(scripts, id: \.self) { url in
-                    HStack {
-                        Image(systemName: "curlybraces")
-                            .foregroundStyle(Theme.accent)
-                        VStack(alignment: .leading) {
-                            Text(url.lastPathComponent)
-                            Text(url.path)
-                                .font(.caption)
-                                .foregroundStyle(Theme.inkTertiary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-                    }
-                }
-            }
-        }
-        .onAppear {
-            if let root = appState.project?.root {
-                let dir = root.appendingPathComponent("scripts")
-                scripts = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
-            }
-        }
+        PluginListView()
     }
 }
 
 struct SettingsList: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -448,8 +471,8 @@ struct SettingsList: View {
                     Section("路径") {
                         LabeledContent("根目录") {
                             Text(project.root.path)
-                                .font(Theme.monoCaption)
-                                .foregroundStyle(Theme.inkSecondary)
+                                .font(AppFont.monoCaption())
+                                .foregroundStyle(theme.inkSecondary)
                                 .textSelection(.enabled)
                         }
                     }

@@ -1,11 +1,13 @@
 import SwiftUI
 import SkycBlogCore
 import AppKit
+import WebKit
 
 // MARK: - 详情区
 
 struct DetailColumnView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         Group {
@@ -14,13 +16,12 @@ struct DetailColumnView: View {
                 EditorView(page: page)
             } else if let project = appState.project, appState.isServing, let url = appState.previewURL {
                 PreviewView(url: url, project: project)
-            } else if appState.project != nil {
-                NoSelectionView()
             } else {
                 NoSelectionView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
     }
 
     private func currentPage(id: String) -> Page? {
@@ -33,15 +34,16 @@ struct DetailColumnView: View {
 
 struct NoSelectionView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 14) {
             Image(systemName: "doc.text.below.ecg")
                 .font(.system(size: 42, weight: .light))
-                .foregroundStyle(Theme.inkTertiary)
+                .foregroundStyle(theme.inkTertiary)
             Text("在左侧选择一篇文章开始编辑")
-                .font(.system(.body, design: .serif))
-                .foregroundStyle(Theme.inkSecondary)
+                .font(AppFont.body())
+                .foregroundStyle(theme.inkSecondary)
             if appState.project != nil {
                 Button {
                     appState.sheet = .newPost
@@ -50,11 +52,10 @@ struct NoSelectionView: View {
                 }
                 .controlSize(.regular)
                 .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
+                .tint(theme.accent)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background)
     }
 }
 
@@ -63,11 +64,12 @@ struct NoSelectionView: View {
 struct EditorView: View {
     let page: Page
     @EnvironmentObject var appState: AppState
-    @State private var raw: String = ""
+    @Environment(\.theme) private var theme
     @State private var frontMatter: String = ""
     @State private var content: String = ""
     @State private var rendered: String = ""
-    @State private var loaded: Bool = false
+    @State private var renderToken: Int = 0
+    @State private var isRendering: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -75,17 +77,22 @@ struct EditorView: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(page.title)
-                        .font(.system(.title3, design: .serif).weight(.semibold))
-                        .foregroundStyle(Theme.ink)
+                        .font(AppFont.title(size: 18))
+                        .foregroundStyle(theme.ink)
                     HStack(spacing: 6) {
                         Text(page.url)
                         Text("·")
                         Text(page.kind.rawValue)
                         Text("·")
                         Text("\(content.count) 字")
+                        if isRendering {
+                            Text("·")
+                            Text("渲染中…")
+                                .foregroundStyle(theme.accent)
+                        }
                     }
-                    .font(.caption)
-                    .foregroundStyle(Theme.inkTertiary)
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
                 }
                 Spacer()
                 Toggle("预览", isOn: $appState.editor.previewVisible)
@@ -102,27 +109,42 @@ struct EditorView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background(Theme.background)
-            .overlay(Divider(), alignment: .bottom)
+            .background(theme.background)
+            .overlay(Rectangle().fill(theme.divider).frame(height: 0.5), alignment: .bottom)
 
             // 编辑 + 预览
             if appState.editor.previewVisible {
                 HSplitView {
-                    MarkdownEditor(text: $content, onChange: markDirty)
+                    MarkdownEditor(text: $content, onChange: handleContentChange)
                         .frame(minWidth: 320)
-                    PreviewPane(html: rendered)
+                    MarkdownWebPreview(html: rendered, baseURL: page.sourcePath)
                         .frame(minWidth: 320)
                 }
             } else {
-                MarkdownEditor(text: $content, onChange: markDirty)
+                MarkdownEditor(text: $content, onChange: handleContentChange)
             }
         }
         .onAppear(perform: load)
         .onChange(of: page.id) { _, _ in load() }
-        .onChange(of: content) { _, new in renderPreview(new) }
+        .onDisappear {
+            renderToken &+= 1   // 取消未完成的渲染任务
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .editorPreviewRendered)) { note in
+            guard
+                let info = note.userInfo,
+                let pid = info["pageID"] as? String, pid == page.id,
+                let tok = info["token"] as? Int, tok == renderToken,
+                let html = info["html"] as? String
+            else { return }
+            rendered = html
+            isRendering = false
+        }
     }
 
     private func load() {
+        renderToken &+= 1
+        let snapshot = renderToken
+        isRendering = true
         do {
             let text = try String(contentsOfFile: page.sourcePath, encoding: .utf8)
             if let (fm, md) = splitFrontMatter(text) {
@@ -131,12 +153,11 @@ struct EditorView: View {
             } else {
                 content = text
             }
-            raw = text
             appState.editor.isDirty = false
-            renderPreview(content)
-            loaded = true
+            scheduleRender(md: content, token: snapshot)
         } catch {
             appState.log(.error("读取失败：\(error.localizedDescription)"))
+            isRendering = false
         }
     }
 
@@ -153,12 +174,29 @@ struct EditorView: View {
         }
     }
 
-    private func markDirty() {
+    private func handleContentChange() {
         appState.editor.isDirty = true
+        renderToken &+= 1
+        scheduleRender(md: content, token: renderToken)
     }
 
-    private func renderPreview(_ md: String) {
-        rendered = MarkdownRenderer.render(md)
+    /// 把 Markdown 渲染放到后台队列,debounce 200ms,只接受最新一次结果。
+    private func scheduleRender(md: String, token: Int) {
+        isRendering = true
+        let pageID = page.id
+        // 在后台执行渲染,通过 Notification 把结果送回主线程。
+        Task.detached(priority: .userInitiated) { [token, pageID] in
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            if Task.isCancelled { return }
+            let html = MarkdownRenderer.render(md)
+            await MainActor.run {
+                NotificationCenter.default.post(
+                    name: .editorPreviewRendered,
+                    object: nil,
+                    userInfo: ["pageID": pageID, "token": token, "html": html]
+                )
+            }
+        }
     }
 
     /// 简单切分 front matter：`---\n...\n---\n` 前缀。
@@ -177,64 +215,162 @@ struct EditorView: View {
     }
 }
 
+extension Notification.Name {
+    static let editorPreviewRendered = Notification.Name("SkycBlog.editorPreviewRendered")
+    static let editorPreviewFailed   = Notification.Name("SkycBlog.editorPreviewFailed")
+}
+
 struct MarkdownEditor: View {
     @Binding var text: String
     let onChange: () -> Void
+    @Environment(\.theme) private var theme
     @State private var fontSize: CGFloat = 14
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             if text.isEmpty {
                 Text("开始书写…")
-                    .foregroundStyle(Theme.inkTertiary)
-                    .font(.system(size: fontSize, design: .serif))
+                    .foregroundStyle(theme.inkTertiary)
+                    .font(AppFont.body(size: fontSize))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 16)
                     .allowsHitTesting(false)
             }
             TextEditor(text: $text)
-                .font(.system(size: fontSize, design: .serif))
+                .font(AppFont.body(size: fontSize))
                 .scrollContentBackground(.hidden)
-                .background(Theme.editorBackground)
+                .background(theme.editorBackground)
+                .foregroundStyle(theme.ink)
                 .padding(.horizontal, 16)
                 .onChange(of: text) { _, _ in onChange() }
         }
-        .background(Theme.editorBackground)
+        .background(theme.editorBackground)
     }
 }
 
 struct PreviewPane: View {
     let html: String
+    @Environment(\.theme) private var theme
 
     var body: some View {
+        // 已弃用的同步 HTML 解析实现 —— 已被 MarkdownWebPreview 替代,留空以避免破坏其它引用。
         ScrollView {
             VStack(alignment: .leading) {
-                if let attributed = renderAttributed(html) {
-                    Text(attributed)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: 720, alignment: .leading)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 16)
-                } else {
-                    Text(html).font(Theme.mono).foregroundStyle(.secondary)
-                        .padding(20)
-                }
+                Text("")  // 占位
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color(red: 1.0, green: 0.99, blue: 0.97))
+        .background(theme.previewBackground)
+    }
+}
+
+/// 用 WKWebView 渲染 Markdown 预览 —— 在子进程解析 HTML,不会阻塞主线程。
+struct MarkdownWebPreview: NSViewRepresentable {
+    let html: String
+    let baseURL: String
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> WKWebView {
+        let cfg = WKWebViewConfiguration()
+        let web = WKWebView(frame: .zero, configuration: cfg)
+        web.setValue(false, forKey: "drawsBackground")
+        web.navigationDelegate = context.coordinator
+        return web
     }
 
-    private func renderAttributed(_ html: String) -> AttributedString? {
-        guard let data = html.data(using: .utf8) else { return nil }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
-        ]
-        if let ns = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
-            return AttributedString(ns)
+    func updateNSView(_ web: WKWebView, context: Context) {
+        context.coordinator.lastHTML = html
+        let body = Self.wrapHTML(body: html)
+        if context.coordinator.loadedHTML == body { return }
+        context.coordinator.loadedHTML = body
+        let parent = (baseURL as NSString).deletingLastPathComponent
+        web.loadHTMLString(body, baseURL: URL(fileURLWithPath: parent))
+    }
+
+    /// 把渲染出的 HTML 套上轻量样式（苹方字体、代码块背景、表格边框）。
+    static func wrapHTML(body: String) -> String {
+        let css = """
+        :root { color-scheme: light dark; }
+        body {
+            font-family: "PingFang SC", "PingFangSC-Regular", -apple-system, sans-serif;
+            line-height: 1.65;
+            color: #1f1f21;
+            background: #ffffff;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px 28px 80px;
         }
-        return nil
+        @media (prefers-color-scheme: dark) {
+            body { color: #ececef; background: #1a1a1c; }
+            a { color: #f08c6b; }
+            pre, code { background: rgba(255,255,255,0.06); }
+            blockquote { color: #b9b9bb; border-left-color: #444449; }
+            table, th, td { border-color: #38383d; }
+            hr { border-color: #2c2c30; }
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: "PingFang SC", "PingFangSC-Semibold", sans-serif;
+            font-weight: 600;
+            margin: 1.4em 0 0.6em;
+            line-height: 1.3;
+        }
+        h1 { font-size: 1.8em; border-bottom: 1px solid #e3e3e6; padding-bottom: 0.25em; }
+        h2 { font-size: 1.45em; }
+        h3 { font-size: 1.2em; }
+        p { margin: 0.8em 0; }
+        a { color: #bf5233; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            font-size: 0.88em;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.06);
+        }
+        pre {
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            padding: 14px 16px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.05);
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        pre code { background: transparent; padding: 0; }
+        blockquote {
+            margin: 1em 0;
+            padding: 4px 14px;
+            border-left: 3px solid #d3d3d6;
+            color: #555;
+        }
+        ul, ol { padding-left: 1.6em; }
+        li { margin: 0.25em 0; }
+        img { max-width: 100%; border-radius: 6px; }
+        table { border-collapse: collapse; margin: 1em 0; }
+        th, td { border: 1px solid #e3e3e6; padding: 6px 10px; }
+        th { background: rgba(0,0,0,0.03); }
+        hr { border: none; border-top: 1px solid #e3e3e6; margin: 1.6em 0; }
+        .task-item input { margin-right: 6px; }
+        """
+        return """
+        <!DOCTYPE html>
+        <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>\(css)</style></head><body>\(body)</body></html>
+        """
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        var loadedHTML: String = ""
+        var lastHTML: String = ""
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {}
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url {
+                if url.scheme == "http" || url.scheme == "https" {
+                    NSWorkspace.shared.open(url)
+                    decisionHandler(.cancel)
+                    return
+                }
+            }
+            decisionHandler(.allow)
+        }
     }
 }
 
@@ -243,17 +379,19 @@ struct PreviewPane: View {
 struct PreviewView: View {
     let url: URL
     let project: BlogProject
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: "globe")
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(theme.accent)
                 Text("本地预览")
-                    .font(.system(.body, design: .serif).weight(.semibold))
+                    .font(AppFont.headline())
+                    .foregroundStyle(theme.ink)
                 Text(url.absoluteString)
-                    .font(Theme.monoCaption)
-                    .foregroundStyle(Theme.inkTertiary)
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
                 Spacer()
                 Button {
                     NSWorkspace.shared.open(url)
@@ -264,8 +402,8 @@ struct PreviewView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
-            .background(Theme.background)
-            .overlay(Divider(), alignment: .bottom)
+            .background(theme.background)
+            .overlay(Rectangle().fill(theme.divider).frame(height: 0.5), alignment: .bottom)
             WebPreview(url: url)
         }
     }
@@ -275,6 +413,7 @@ struct PreviewView: View {
 
 struct ConsoleView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
     @State private var filter: Filter = .all
 
     enum Filter: String, CaseIterable, Identifiable {
@@ -296,8 +435,8 @@ struct ConsoleView: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Text("控制台")
-                    .font(.system(.caption, design: .serif).weight(.semibold))
-                    .foregroundStyle(Color.white.opacity(0.8))
+                    .font(AppFont.captionMedium())
+                    .foregroundStyle(theme.consoleText.opacity(0.85))
                 Picker("", selection: $filter) {
                     ForEach(Filter.allCases) { f in
                         Text(f.rawValue).tag(f)
@@ -308,8 +447,8 @@ struct ConsoleView: View {
                 .frame(width: 360)
                 Spacer()
                 Text("\(filtered.count) 条")
-                    .font(.caption)
-                    .foregroundStyle(Color.white.opacity(0.5))
+                    .font(AppFont.caption())
+                    .foregroundStyle(theme.consoleTextDim)
                 Button {
                     appState.clearLog()
                 } label: {
@@ -317,7 +456,7 @@ struct ConsoleView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("清空")
-                .foregroundStyle(Color.white.opacity(0.7))
+                .foregroundStyle(theme.consoleTextDim)
                 Button {
                     appState.consoleVisible = false
                 } label: {
@@ -325,11 +464,11 @@ struct ConsoleView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("收起 (⌘`)")
-                .foregroundStyle(Color.white.opacity(0.7))
+                .foregroundStyle(theme.consoleTextDim)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color.black.opacity(0.5))
+            .background(theme.consoleBackground.opacity(0.85))
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -340,6 +479,7 @@ struct ConsoleView: View {
                     }
                     .padding(.vertical, 6)
                 }
+                .background(theme.consoleBackground)
                 .onChange(of: filtered.count) { _, _ in
                     if let last = filtered.last {
                         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
@@ -352,20 +492,21 @@ struct ConsoleView: View {
 
 struct ConsoleLine: View {
     let entry: LogEntry
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text(time)
-                .font(.system(.caption2, design: .monospaced))
-                .foregroundStyle(Color.white.opacity(0.4))
+                .font(AppFont.monoCaption(size: 10))
+                .foregroundStyle(theme.consoleTextDim)
                 .frame(width: 60, alignment: .leading)
             Text(prefix)
-                .font(.system(.caption2, design: .monospaced).weight(.semibold))
+                .font(AppFont.monoCaption(size: 10).weight(.semibold))
                 .foregroundStyle(color)
                 .frame(width: 50, alignment: .leading)
             Text(entry.message)
-                .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(Color.white.opacity(0.92))
+                .font(AppFont.mono(size: 12))
+                .foregroundStyle(theme.consoleText)
                 .textSelection(.enabled)
             Spacer(minLength: 0)
         }
@@ -389,10 +530,10 @@ struct ConsoleLine: View {
 
     private var color: Color {
         switch entry.level {
-        case .info: return Color.white.opacity(0.55)
-        case .success: return Theme.success
-        case .warn: return Theme.warn
-        case .error: return Theme.error
+        case .info: return theme.consoleTextDim
+        case .success: return theme.success
+        case .warn: return theme.warn
+        case .error: return theme.errorColor
         }
     }
 }

@@ -27,8 +27,9 @@ public final class Builder {
 
         // 2. 加载主题资源
         ThemeManager.copyDefaultIfMissing(projectRoot: projectRoot, themeName: config.themeName)
-        try? FSUtil.copyDirectory(from: (themeRoot as NSString).appendingPathComponent("static"), to: config.outputDir)
-        try? FSUtil.copyDirectory(from: (projectRoot as NSString).appendingPathComponent("static"), to: config.outputDir)
+        // static/ 目录拷贝到 outputDir 下对应的子目录,保留 /static/ 路径,这样模板里的 /static/css/main.css 链接能找到文件
+        copyStaticFolder(from: (themeRoot as NSString).appendingPathComponent("static"), to: (config.outputDir as NSString).appendingPathComponent("static"))
+        copyStaticFolder(from: (projectRoot as NSString).appendingPathComponent("static"), to: (config.outputDir as NSString).appendingPathComponent("static"))
 
         // 3. 加载内容
         let content = ContentLoader(projectRoot: projectRoot, config: config)
@@ -39,18 +40,17 @@ public final class Builder {
         result.pages = content.pages
 
         // 4. 加载插件
-        let plugins = PluginManager(projectRoot: projectRoot)
+        let plugins = PluginManager(projectRoot: projectRoot, disabledFilenames: Set(config.disabledPlugins))
         plugins.loadAll()
         plugins.site = TemplateContextBuilder.build(config: config, pages: content.pages, tags: content.allTags, categories: content.allCategories)
         plugins.fire("beforeBuild")
 
         // 5. 重新构建 site 上下文（插件可能修改 pages）
         var site = plugins.site
-        if let pagesRaw = site["pages"] as? [[String: Any]] {
-            // 如果插件把 pages 替换为 JSON 数组，重新解析
-            _ = pagesRaw
-        }
-        if let pagesArray = site["pages"] as? [Any] {
+        // 仅当插件真的修改了 pages（即 site["pages"] 数量与 content.pages 不同）时,才采用插件版本
+        let originalPostCount = content.pages.filter { $0.kind == .post }.count
+        if let pagesArray = site["pages"] as? [Any],
+           pagesArray.count != originalPostCount {
             // 把 pages 转换为内部模型
             var newPages: [Page] = []
             for p in pagesArray {
@@ -96,7 +96,8 @@ public final class Builder {
                 outHTML = "<!DOCTYPE html>\n<html lang=\"\(config.language)\">\n" + html
             }
             if config.minifyHTML { outHTML = HTMLMinifier.minify(outHTML) }
-            FSUtil.writeText(outHTML, to: path)
+            let absPath = (config.outputDir as NSString).appendingPathComponent(p.outPath)
+            FSUtil.writeText(outHTML, to: absPath)
             plugins.fire("afterRender", args: [p.outPath, outHTML])
             result.generated.append(p.outPath)
         }
@@ -366,6 +367,27 @@ public final class Builder {
         </html>
         """
         return config.minifyHTML ? HTMLMinifier.minify(html) : html
+    }
+
+    /// 把 src 目录下的所有文件复制到 dst 目录下(保留子目录结构)。
+    /// 若 dst 不存在则自动创建。若 src 不存在则跳过。
+    func copyStaticFolder(from src: String, to dst: String) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: src) else { return }
+        try? fm.createDirectory(atPath: dst, withIntermediateDirectories: true)
+        let items = (try? fm.contentsOfDirectory(atPath: src)) ?? []
+        for item in items {
+            let s = (src as NSString).appendingPathComponent(item)
+            let d = (dst as NSString).appendingPathComponent(item)
+            var isDir: ObjCBool = false
+            fm.fileExists(atPath: s, isDirectory: &isDir)
+            if isDir.boolValue {
+                copyStaticFolder(from: s, to: d)
+            } else {
+                if fm.fileExists(atPath: d) { try? fm.removeItem(atPath: d) }
+                try? fm.copyItem(atPath: s, toPath: d)
+            }
+        }
     }
 
     func dictToPage(_ d: [String: Any]) -> Page? {

@@ -127,8 +127,21 @@ public final class ContentLoader {
     private func parseFile(path: String, relPath: String, kind: Page.Kind, fm: FileManager) throws -> Page {
         let text = try String(contentsOfFile: path, encoding: .utf8)
         let (fmData, body) = FrontMatterParser.split(text)
+        let rawID = ((path as NSString).lastPathComponent as NSString).deletingPathExtension
+        // 去掉文件名开头的日期前缀（YYYY-MM-DD-），让 page.id = 真正的 slug
+        let idSlug: String
+        if kind == .post {
+            let parts = rawID.components(separatedBy: "-")
+            if parts.count >= 4, parts[0].count == 4, parts[1].count == 2, parts[2].count == 2 {
+                idSlug = parts[3...].joined(separator: "-")
+            } else {
+                idSlug = rawID
+            }
+        } else {
+            idSlug = rawID
+        }
         var p = Page(
-            id: ((path as NSString).lastPathComponent as NSString).deletingPathExtension,
+            id: idSlug,
             kind: kind,
             sourcePath: path,
             relSourcePath: relPath,
@@ -138,7 +151,7 @@ public final class ContentLoader {
             categories: fmData.stringArray("categories"),
             draft: fmData.bool("draft"),
             layout: fmData.string("layout") ?? "post",
-            slug: fmData.string("slug") ?? ((path as NSString).lastPathComponent as NSString).deletingPathExtension,
+            slug: fmData.string("slug") ?? idSlug,
             cover: fmData.string("cover"),
             excerpt: fmData.string("excerpt"),
             contentRaw: body
@@ -150,8 +163,14 @@ public final class ContentLoader {
         if p.excerpt == nil || p.excerpt!.isEmpty {
             p.excerpt = MarkdownRenderer.excerpt(from: body, length: 150)
         }
-        // 计算 URL
-        let urlPath = Permalink.resolve(config: config, page: p)
+        // 计算 URL：page 类型（独立页面）使用 /:slug/ 模式，post 使用配置的 permalink 模式
+        let urlPath: String
+        if p.kind == .page {
+            let slug = p.slug.isEmpty ? p.id : p.slug
+            urlPath = "/\(slug)/"
+        } else {
+            urlPath = Permalink.resolve(config: config, page: p)
+        }
         p.url = (config.baseURL.hasSuffix("/") ? String(config.baseURL.dropLast()) : config.baseURL) + urlPath
         let trimmedURL = urlPath.hasPrefix("/") ? String(urlPath.dropFirst()) : urlPath
         p.outPath = trimmedURL.isEmpty ? "index.html" : trimmedURL

@@ -7,6 +7,7 @@ import SkycBlogCore
 struct NewProjectSheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
 
     @State private var name: String = "my-blog"
     @State private var language: String = "zh-CN"
@@ -36,8 +37,8 @@ struct NewProjectSheet: View {
                 Section {
                     HStack {
                         Text(parent.path)
-                            .font(Theme.monoCaption)
-                            .foregroundStyle(Theme.inkSecondary)
+                            .font(AppFont.monoCaption())
+                            .foregroundStyle(theme.inkSecondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                         Spacer()
@@ -47,13 +48,13 @@ struct NewProjectSheet: View {
                     Text("父目录")
                 } footer: {
                     Text("项目将创建为：\(parent.appendingPathComponent(name).path)")
-                        .font(.caption)
-                        .foregroundStyle(Theme.inkTertiary)
+                        .font(AppFont.caption())
+                        .foregroundStyle(theme.inkTertiary)
                 }
                 if let error {
                     Text(error)
-                        .font(.caption)
-                        .foregroundStyle(Theme.error)
+                        .font(AppFont.caption())
+                        .foregroundStyle(theme.errorColor)
                 }
             }
             .formStyle(.grouped)
@@ -65,7 +66,7 @@ struct NewProjectSheet: View {
             }
         }
         .frame(width: 520, height: 440)
-        .background(Theme.cream)
+        .background(theme.background)
     }
 
     private func pickParent() {
@@ -84,6 +85,7 @@ struct NewProjectSheet: View {
 struct OpenProjectSheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
     @State private var url: URL? = nil
 
     var body: some View {
@@ -101,16 +103,19 @@ struct OpenProjectSheet: View {
                 } label: {
                     HStack {
                         Image(systemName: "folder.badge.plus")
+                            .foregroundStyle(theme.accent)
                         Text(url?.path ?? "选择目录…")
+                            .font(AppFont.body())
+                            .foregroundStyle(theme.ink)
                             .lineLimit(1).truncationMode(.middle)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
-                    .background(Theme.cardBackground)
+                    .background(theme.cardBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(Theme.divider, lineWidth: 0.5)
+                            .strokeBorder(theme.divider, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -118,8 +123,8 @@ struct OpenProjectSheet: View {
                 if !appState.recentProjects.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("最近")
-                            .font(.system(.caption, design: .serif).weight(.semibold))
-                            .foregroundStyle(Theme.inkSecondary)
+                            .font(AppFont.eyebrow())
+                            .foregroundStyle(theme.inkSecondary)
                             .textCase(.uppercase)
                             .tracking(1.0)
                         ForEach(appState.recentProjects.prefix(5), id: \.self) { url in
@@ -129,13 +134,14 @@ struct OpenProjectSheet: View {
                             } label: {
                                 HStack {
                                     Image(systemName: "clock")
-                                        .foregroundStyle(Theme.inkTertiary)
+                                        .foregroundStyle(theme.inkTertiary)
                                     Text(url.lastPathComponent)
-                                        .foregroundStyle(Theme.ink)
+                                        .font(AppFont.body())
+                                        .foregroundStyle(theme.ink)
                                     Spacer()
                                 }
                                 .padding(.horizontal, 10).padding(.vertical, 6)
-                                .background(Theme.cardBackground)
+                                .background(theme.cardBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 6))
                             }
                             .buttonStyle(.plain)
@@ -151,7 +157,7 @@ struct OpenProjectSheet: View {
             }
         }
         .frame(width: 520, height: 420)
-        .background(Theme.cream)
+        .background(theme.background)
     }
 }
 
@@ -160,6 +166,7 @@ struct OpenProjectSheet: View {
 struct NewPostSheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
     @State private var title: String = ""
     @State private var isDraft: Bool = false
 
@@ -175,7 +182,7 @@ struct NewPostSheet: View {
                     Text("标题")
                 } footer: {
                     Text("文件名将自动生成为 YYYY-MM-DD-<slug>.md")
-                        .font(.caption)
+                        .font(AppFont.caption())
                 }
             }
             .formStyle(.grouped)
@@ -187,7 +194,7 @@ struct NewPostSheet: View {
             }
         }
         .frame(width: 460, height: 320)
-        .background(Theme.cream)
+        .background(theme.background)
     }
 }
 
@@ -196,16 +203,27 @@ struct NewPostSheet: View {
 struct ProjectInfoSheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
     var body: some View {
-        VStack {
-            Text("项目信息").font(.title2)
+        VStack(spacing: 16) {
+            Text("项目信息")
+                .font(AppFont.title())
+                .foregroundStyle(theme.ink)
             if let project = appState.project {
                 Text(project.config.title)
-                Text(project.root.path).font(.caption)
+                    .font(AppFont.body())
+                    .foregroundStyle(theme.ink)
+                Text(project.root.path)
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkSecondary)
             }
+            Spacer()
             Button("关闭") { dismiss() }
+                .controlSize(.regular)
         }
+        .padding(24)
         .frame(width: 400, height: 200)
+        .background(theme.background)
     }
 }
 
@@ -214,34 +232,46 @@ struct ProjectInfoSheet: View {
 struct DeploySheet: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
     var body: some View {
-        VStack {
-            Text("部署").font(.title2)
+        VStack(spacing: 16) {
+            Text("部署")
+                .font(AppFont.title())
+                .foregroundStyle(theme.ink)
             Text("部署到 GitHub Pages / Cloudflare Pages")
+                .font(AppFont.body())
+                .foregroundStyle(theme.inkSecondary)
             HStack {
                 Button("GitHub Pages") { appState.log(.info("暂未实现")) }
+                    .controlSize(.regular)
                 Button("Cloudflare Pages") { appState.log(.info("暂未实现")) }
+                    .controlSize(.regular)
                 Button("关闭") { dismiss() }
+                    .controlSize(.regular)
             }
+            Spacer()
         }
+        .padding(24)
         .frame(width: 400, height: 200)
+        .background(theme.background)
     }
 }
 
 // MARK: - 通用 sheet 元素
 
 struct SheetHeader: View {
+    @Environment(\.theme) private var theme
     let title: String
     let subtitle: String?
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.system(.title2, design: .serif).weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .font(AppFont.title())
+                .foregroundStyle(theme.ink)
             if let subtitle {
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(Theme.inkSecondary)
+                    .font(AppFont.caption())
+                    .foregroundStyle(theme.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -257,6 +287,7 @@ struct SheetFooter: View {
     var confirmDisabled: Bool = false
     let onConfirm: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack {
@@ -269,7 +300,7 @@ struct SheetFooter: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(Color.white.opacity(0.5))
+        .background(theme.surface)
     }
 }
 
@@ -277,6 +308,7 @@ struct SheetFooter: View {
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         TabView {
@@ -292,15 +324,19 @@ struct SettingsView: View {
             Form {
                 Section("最近项目") {
                     if appState.recentProjects.isEmpty {
-                        Text("暂无").foregroundStyle(.secondary)
+                        Text("暂无")
+                            .font(AppFont.body())
+                            .foregroundStyle(theme.inkSecondary)
                     } else {
                         ForEach(appState.recentProjects, id: \.self) { url in
                             HStack {
                                 Text(url.lastPathComponent)
+                                    .font(AppFont.body())
+                                    .foregroundStyle(theme.ink)
                                 Spacer()
                                 Text(url.path)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(AppFont.monoCaption())
+                                    .foregroundStyle(theme.inkSecondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                             }
@@ -313,14 +349,17 @@ struct SettingsView: View {
 
             VStack {
                 Text("SkycBlog 1.0.0")
-                    .font(.headline)
+                    .font(AppFont.title())
+                    .foregroundStyle(theme.ink)
                 Text("一个安静的写作桌面。")
-                    .font(.caption)
+                    .font(AppFont.body())
+                    .foregroundStyle(theme.inkSecondary)
                 Spacer()
             }
             .padding()
             .tabItem { Label("关于", systemImage: "info.circle") }
         }
         .frame(width: 520, height: 360)
+        .background(theme.background)
     }
 }

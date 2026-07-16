@@ -66,24 +66,132 @@ public final class LocalServer {
         }
         var path = parts[1]
         if let q = path.firstIndex(of: "?") { path = String(path[..<q]) }
-        if path.hasSuffix("/") { path += "index.html" }
         let decoded = path.removingPercentEncoding ?? path
-        let filePath: String
-        if decoded.hasPrefix("/") {
-            filePath = (rootDir as NSString).appendingPathComponent(String(decoded.dropFirst()))
-        } else {
-            filePath = (rootDir as NSString).appendingPathComponent(decoded)
+        // 不允许路径穿越
+        if decoded.contains("..") {
+            return httpResponse(status: "403 Forbidden", contentType: "text/plain; charset=utf-8", body: "Forbidden: Path contains '..'")
         }
-        if FileManager.default.fileExists(atPath: filePath) {
+        // 解析相对路径：默认空/末尾 / 视作目录,走 index.html
+        var relPath = decoded
+        if relPath.hasPrefix("/") { relPath = String(relPath.dropFirst()) }
+        if relPath.isEmpty || relPath.hasSuffix("/") { relPath += "index.html" }
+        let filePath = (rootDir as NSString).appendingPathComponent(relPath)
+        // 标准化后再次校验,防止跳出 rootDir
+        let rootURL = URL(fileURLWithPath: rootDir, isDirectory: true).standardizedFileURL.path
+        let fileURL = URL(fileURLWithPath: filePath).standardizedFileURL.path
+        if !fileURL.hasPrefix(rootURL) {
+            return httpResponse(status: "403 Forbidden", contentType: "text/plain; charset=utf-8", body: "Forbidden: Path escapes root")
+        }
+
+        // 判断目录
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: filePath, isDirectory: &isDirectory)
+        if exists && isDirectory.boolValue {
+            let idx = (filePath as NSString).appendingPathComponent("index.html")
+            if FileManager.default.fileExists(atPath: idx) {
+                let body = (try? String(contentsOfFile: idx, encoding: .utf8)) ?? ""
+                let ext = (idx as NSString).pathExtension.lowercased()
+                return httpResponse(status: "200 OK", contentType: contentType(for: ext), body: body)
+            } else {
+                return listDirectory(at: filePath, requestPath: decoded)
+            }
+        }
+
+        if exists {
             let body = (try? String(contentsOfFile: filePath, encoding: .utf8)) ?? ""
             let ext = (filePath as NSString).pathExtension.lowercased()
             let ct = contentType(for: ext)
             return httpResponse(status: "200 OK", contentType: ct, body: body)
         }
-        // 尝试 404.html
-        let notFound = (rootDir as NSString).appendingPathComponent("404.html")
-        let body = (FileManager.default.fileExists(atPath: notFound) ? (try? String(contentsOfFile: notFound, encoding: .utf8)) : "404 Not Found") ?? "404 Not Found"
-        return httpResponse(status: "404 Not Found", contentType: "text/html; charset=utf-8", body: body)
+
+        // 友好 404
+        return notFoundResponse(requestedPath: decoded)
+    }
+
+    /// 友好 404:优先用站点自身的 404.html,否则给一段说明 HTML。
+    func notFoundResponse(requestedPath: String) -> String {
+        let customPath = (rootDir as NSString).appendingPathComponent("404.html")
+        if FileManager.default.fileExists(atPath: customPath) {
+            if let text = try? String(contentsOfFile: customPath, encoding: .utf8) {
+                return httpResponse(status: "404 Not Found", contentType: "text/html; charset=utf-8", body: text)
+            }
+        }
+        let html = """
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+          <meta charset="UTF-8"/>
+          <title>404 · 未找到</title>
+          <style>
+            :root { color-scheme: light dark; }
+            body { font-family: "PingFang SC", -apple-system, sans-serif;
+                   background: #f7f2eb; color: #1f1f21;
+                   display: flex; min-height: 100vh; margin: 0;
+                   align-items: center; justify-content: center; }
+            @media (prefers-color-scheme: dark) {
+              body { background: #1a1a1c; color: #ececef; }
+              code, .hint { background: rgba(255,255,255,0.06); color: #cfcfd2; }
+            }
+            .card { max-width: 520px; padding: 40px 44px; border-radius: 14px;
+                    background: rgba(255,255,255,0.6); }
+            @media (prefers-color-scheme: dark) { .card { background: rgba(255,255,255,0.05); } }
+            h1 { font-size: 56px; margin: 0 0 8px; color: #bf5233; }
+            h2 { font-size: 18px; font-weight: 500; margin: 0 0 24px; opacity: 0.7; }
+            code, .hint { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px;
+                          font-family: "SF Mono", monospace; font-size: 13px; }
+            .hint { display: block; padding: 10px 14px; margin: 8px 0; }
+            ul { padding-left: 20px; line-height: 1.8; }
+            a { color: #bf5233; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>404</h1>
+            <h2>请求的页面不存在</h2>
+            <p>请求路径：<code>\(escapeHTML(requestedPath))</code></p>
+            <p>可能原因：</p>
+            <ul>
+              <li>还没有构建 —— 请先在 SkycBlog App 中点击「构建」</li>
+              <li>构建后未刷新 —— 重新构建一次</li>
+              <li>输出目录为空 —— 检查 <code>\(escapeHTML(rootDir))</code></li>
+            </ul>
+            <p class="hint">提示：构建完成后站点首页应为 <code>/index.html</code>。</p>
+            <p><a href="/">返回首页</a></p>
+          </div>
+        </body>
+        </html>
+        """
+        return httpResponse(status: "404 Not Found", contentType: "text/html; charset=utf-8", body: html)
+    }
+
+    /// 简单目录列表(开发用)。
+    func listDirectory(at dir: String, requestPath: String) -> String {
+        let entries = (try? FileManager.default.contentsOfDirectory(atPath: dir).sorted()) ?? []
+        let rows = entries.map { e -> String in
+            let p = (dir as NSString).appendingPathComponent(e)
+            var isDir: ObjCBool = false
+            FileManager.default.fileExists(atPath: p, isDirectory: &isDir)
+            let icon = isDir.boolValue ? "📁" : "📄"
+            return "<li>\(icon) <a href=\"\(e)\">\(escapeHTML(e))</a></li>"
+        }.joined()
+        let html = """
+        <!DOCTYPE html><html><head><meta charset="UTF-8"/><title>\(escapeHTML(requestPath))</title>
+        <style>body{font-family:"PingFang SC",sans-serif;max-width:760px;margin:40px auto;padding:0 20px;color:#1f1f21;background:#f7f2eb}
+        @media(prefers-color-scheme:dark){body{background:#1a1a1c;color:#ececef}}
+        h1{font-weight:500;font-size:18px;opacity:0.7}ul{list-style:none;padding:0}
+        li{padding:6px 0}a{color:#bf5233;text-decoration:none}a:hover{text-decoration:underline}</style>
+        </head><body><h1>\(escapeHTML(requestPath))</h1><ul>\(rows)</ul></body></html>
+        """
+        return httpResponse(status: "200 OK", contentType: "text/html; charset=utf-8", body: html)
+    }
+
+    /// 简单 HTML 转义,避免 404 页面里被注入。
+    func escapeHTML(_ s: String) -> String {
+        return s.replacingOccurrences(of: "&", with: "&amp;")
+                .replacingOccurrences(of: "<", with: "&lt;")
+                .replacingOccurrences(of: ">", with: "&gt;")
+                .replacingOccurrences(of: "\"", with: "&quot;")
+                .replacingOccurrences(of: "'", with: "&#39;")
     }
 
     func httpResponse(status: String, contentType: String, body: String) -> String {

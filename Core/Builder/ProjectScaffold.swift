@@ -112,7 +112,7 @@ public enum ProjectScaffold {
 
     /// 在指定项目根目录创建新文章。
     @discardableResult
-    public static func createPost(projectRoot: String, title: String) throws -> String {
+    public static func createPost(projectRoot: String, title: String, tags: [String] = [], categories: [String] = []) throws -> String {
         let postsDir = (projectRoot as NSString).appendingPathComponent("content/_posts")
         guard FileManager.default.fileExists(atPath: postsDir) else {
             throw ProjectInitError("未找到 content/_posts 目录，请先运行 `blog init`")
@@ -121,12 +121,14 @@ public enum ProjectScaffold {
         let date = DateUtil.yyyyMMdd.string(from: Date())
         let filename = "\(date)-\(slug).md"
         let path = (postsDir as NSString).appendingPathComponent(filename)
+        let tagsStr = tags.isEmpty ? "[]" : "[\(tags.map { "\"\($0)\"" }.joined(separator: ", "))]"
+        let catsStr = categories.isEmpty ? "[]" : "[\(categories.map { "\"\($0)\"" }.joined(separator: ", "))]"
         let text = """
         ---
         title: \(title)
         date: \(date) 09:00:00
-        tags: []
-        categories: []
+        tags: \(tagsStr)
+        categories: \(catsStr)
         ---
 
         # \(title)

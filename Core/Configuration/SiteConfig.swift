@@ -17,6 +17,7 @@ public struct SiteConfig {
     public var generateSearchIndex: Bool = true
     public var generateRSS: Bool = true
     public var generateSitemap: Bool = true
+    public var disabledPlugins: [String] = []
     public var themeConfig: [String: Any] = [:]
     public var deploy: [String: Any] = [:]
     public var extra: [String: Any] = [:]
@@ -93,13 +94,28 @@ public final class ConfigLoader {
             applyOverride(&config, key: k, value: v)
         }
 
-        // 路径标准化
-        config.outputDir = FSUtil.normalize(
-            (config.outputDir as NSString).expandingTildeInPath
-        )
-        if !config.outputDir.hasPrefix("/") {
-            config.outputDir = (config.projectRoot as NSString).appendingPathComponent(config.outputDir)
+        // 路径标准化: 强制把 outputDir 落到项目根下, 避免:
+        //   1) 写成了 /output 这类系统目录(写不进去或写到别处)
+        //   2) 写成了 /Users/.../别的项目, 导致一个博客的构建产物出现在另一个博客里
+        // 规则: 若已经是项目根的子路径 → 取相对; 否则强制为 <projectRoot>/<basename>
+        let rawOut = (config.outputDir as NSString).expandingTildeInPath
+        let normalized = FSUtil.normalize(rawOut)
+        let rootWithSep = config.projectRoot.hasSuffix("/") ? config.projectRoot : config.projectRoot + "/"
+        let finalOut: String
+        if !normalized.hasPrefix("/") {
+            // 相对路径 → 拼到 projectRoot
+            finalOut = (config.projectRoot as NSString).appendingPathComponent(normalized)
+        } else if normalized == config.projectRoot {
+            finalOut = config.projectRoot
+        } else if normalized.hasPrefix(rootWithSep) {
+            // 已经是项目根内的子路径 → 接受
+            finalOut = normalized
+        } else {
+            // 系统级或项目外的绝对路径 → 强制重定向到项目根下
+            let baseName = (normalized as NSString).lastPathComponent
+            finalOut = (config.projectRoot as NSString).appendingPathComponent(baseName.isEmpty ? "output" : baseName)
         }
+        config.outputDir = finalOut
 
         return config
     }
@@ -135,6 +151,7 @@ public final class ConfigLoader {
         if let v = dict["buildDrafts"] as? Bool { c.buildDrafts = v }
         if let v = dict["paginationSize"] as? Int { c.paginationSize = v }
         if let v = dict["themeName"] as? String { c.themeName = v }
+        if let v = dict["theme"] as? String { c.themeName = v }
         if let v = dict["permalink"] as? String { c.permalink = v }
         if let v = dict["minifyHTML"] as? Bool { c.minifyHTML = v }
         if let v = dict["fingerprintAssets"] as? Bool { c.fingerprintAssets = v }
@@ -144,6 +161,7 @@ public final class ConfigLoader {
         if let v = dict["themeConfig"] as? [String: Any] { c.themeConfig = v }
         if let v = dict["deploy"] as? [String: Any] { c.deploy = v }
         if let v = dict["extra"] as? [String: Any] { c.extra = v }
+        if let v = dict["disabledPlugins"] as? [String] { c.disabledPlugins = v }
         return c
     }
 

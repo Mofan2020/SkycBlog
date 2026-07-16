@@ -5,6 +5,7 @@ import JavaScriptCore
 public final class PluginManager {
     public let projectRoot: String
     public private(set) var loaded: [String] = []
+    public private(set) var disabled: Set<String> = []
     public private(set) var errors: [(file: String, message: String)] = []
     public var site: [String: Any] = [:]
     public var pages: [Page] = []
@@ -14,8 +15,9 @@ public final class PluginManager {
     public var contextJSValue: Any? { contextJS.objectForKeyedSubscript("site")?.toObject() as? [String: Any] }
     private var hookCallbacks: [String: [JSValue]] = [:]
 
-    public init(projectRoot: String) {
+    public init(projectRoot: String, disabledFilenames: Set<String> = []) {
         self.projectRoot = projectRoot
+        self.disabled = disabledFilenames
         self.contextJS = JSContext()!
         setupBridge()
     }
@@ -25,6 +27,10 @@ public final class PluginManager {
         guard FileManager.default.fileExists(atPath: dir) else { return }
         let files = (try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []
         for f in files where f.hasSuffix(".js") && !f.hasSuffix(".disabled") {
+            if disabled.contains(f) {
+                Log.info("插件已禁用：\(f)")
+                continue
+            }
             let path = (dir as NSString).appendingPathComponent(f)
             if let src = try? String(contentsOfFile: path, encoding: .utf8) {
                 contextJS.exceptionHandler = { [weak self] ctx, exc in

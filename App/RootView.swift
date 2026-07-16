@@ -4,6 +4,7 @@ import SkycBlogCore
 /// 根视图：无项目时显示欢迎屏，有项目时显示工作台。
 struct RootView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         Group {
@@ -13,15 +14,43 @@ struct RootView: View {
                 WorkspaceView()
             }
         }
-        .background(Theme.background)
+        .themed()
+        .background(Color(.windowBackgroundColor))
         .sheet(item: $appState.sheet) { sheet in
-            switch sheet {
-            case .newProject: NewProjectSheet().environmentObject(appState)
-            case .openProject: OpenProjectSheet().environmentObject(appState)
-            case .newPost: NewPostSheet().environmentObject(appState)
-            case .projectInfo: ProjectInfoSheet().environmentObject(appState)
-            case .deploy: DeploySheet().environmentObject(appState)
-            }
+            sheetContent(sheet)
+                .environmentObject(appState)
+                .themed()
+        }
+        .sheet(item: $appState.renamePageTarget) { page in
+            RenamePageSheet(page: page)
+                .environmentObject(appState)
+                .themed()
+        }
+        .sheet(item: $appState.metadataPageTarget) { page in
+            PageMetadataSheet(page: page)
+                .environmentObject(appState)
+                .themed()
+        }
+        .sheet(item: $appState.renameAlbumTarget) { album in
+            RenameAlbumSheet(album: album)
+                .environmentObject(appState)
+                .themed()
+        }
+        .sheet(isPresented: $appState.newAlbumSheet) {
+            NewAlbumSheet()
+                .environmentObject(appState)
+                .themed()
+        }
+    }
+
+    @ViewBuilder
+    private func sheetContent(_ sheet: AppState.Sheet) -> some View {
+        switch sheet {
+        case .newProject:  NewProjectSheet()
+        case .openProject: OpenProjectSheet()
+        case .newPost:     NewPostSheet()
+        case .projectInfo: ProjectInfoSheet()
+        case .deploy:      DeploySheet()
         }
     }
 }
@@ -30,6 +59,7 @@ struct RootView: View {
 
 struct WelcomeView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -38,36 +68,36 @@ struct WelcomeView: View {
                 Spacer()
                 VStack(alignment: .leading, spacing: 16) {
                     Text("SkycBlog")
-                        .font(.system(size: 48, weight: .semibold, design: .serif))
-                        .foregroundStyle(Theme.ink)
-                    Text("一个安静的写作桌面。\n把 Markdown 文件交给它，把静态站点收回来。")
-                        .font(.system(size: 16, design: .serif))
-                        .foregroundStyle(Theme.inkSecondary)
+                        .font(.system(size: 48, weight: .semibold))
+                        .foregroundStyle(theme.ink)
+                    Text("一个博客管理工具，由Skyc8266制作，希望大家喜欢❤️～\n如果有问题的话可以发邮件到panmofan@icloud.com哦，感谢大家的支持喵")
+                        .font(AppFont.body(size: 16))
+                        .foregroundStyle(theme.inkSecondary)
                         .lineSpacing(4)
                 }
                 Spacer()
-                HStack(spacing: 12) {
+                Label {
                     Text("v1.0")
-                        .font(.system(.caption, design: .monospaced))
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(Theme.tagBackground)
-                        .clipShape(Capsule())
-                    Text("macOS 15+")
-                        .font(.system(.caption, design: .monospaced))
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(Theme.tagBackground)
-                        .clipShape(Capsule())
+                } icon: {
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 6))
+                        .foregroundStyle(theme.accent)
                 }
+                .font(AppFont.monoCaption())
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(theme.tagBackground)
+                .clipShape(Capsule())
+                .foregroundStyle(theme.inkSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 60)
-            .background(Theme.cream)
+            .background(theme.surface)
 
             // 右侧操作区
             VStack(alignment: .leading, spacing: 28) {
                 Text("开始")
-                    .font(.system(.title3, design: .serif).weight(.semibold))
-                    .foregroundStyle(Theme.ink)
+                    .font(AppFont.headline(size: 18))
+                    .foregroundStyle(theme.ink)
 
                 VStack(spacing: 12) {
                     WelcomeAction(icon: "plus.circle", title: "新建项目", subtitle: "在指定目录创建一套完整的博客工程") {
@@ -81,8 +111,8 @@ struct WelcomeView: View {
                 if !appState.recentProjects.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("最近的项目")
-                            .font(.system(.subheadline, design: .serif).weight(.semibold))
-                            .foregroundStyle(Theme.inkSecondary)
+                            .font(AppFont.eyebrow())
+                            .foregroundStyle(theme.inkSecondary)
                             .textCase(.uppercase)
                             .tracking(1.2)
                         VStack(spacing: 4) {
@@ -98,7 +128,7 @@ struct WelcomeView: View {
             .frame(maxWidth: 420)
             .padding(.horizontal, 40)
             .padding(.vertical, 40)
-            .background(Theme.background)
+            .background(theme.background)
         }
     }
 }
@@ -108,40 +138,43 @@ struct WelcomeAction: View {
     let title: String
     let subtitle: String
     let action: () -> Void
+    @Environment(\.theme) private var theme
+    @State private var hovered = false
 
     var body: some View {
         Button(action: action) {
             HStack(alignment: .top, spacing: 14) {
                 Image(systemName: icon)
                     .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(theme.accent)
                     .frame(width: 32, alignment: .center)
                     .padding(.top, 2)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(.body, design: .serif).weight(.semibold))
-                        .foregroundStyle(Theme.ink)
+                        .font(AppFont.headline())
+                        .foregroundStyle(theme.ink)
                     Text(subtitle)
-                        .font(.system(.caption))
-                        .foregroundStyle(Theme.inkSecondary)
+                        .font(AppFont.caption())
+                        .foregroundStyle(theme.inkSecondary)
                         .lineLimit(2)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.inkTertiary)
+                    .foregroundStyle(theme.inkTertiary)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.cardBackground)
+            .background(hovered ? theme.cardHover : theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(Theme.divider, lineWidth: 0.5)
+                    .strokeBorder(theme.divider, lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
         .contentShape(Rectangle())
+        .onHover { hovered = $0 }
     }
 }
 
@@ -149,27 +182,28 @@ struct RecentProjectRow: View {
     let url: URL
     let onOpen: () -> Void
     @State private var hovered = false
+    @Environment(\.theme) private var theme
 
     var body: some View {
         Button(action: onOpen) {
             HStack(spacing: 10) {
                 Image(systemName: "doc.text")
                     .font(.system(size: 12))
-                    .foregroundStyle(Theme.inkTertiary)
+                    .foregroundStyle(theme.inkTertiary)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
-                        .font(.system(.body))
-                        .foregroundStyle(Theme.ink)
+                        .font(AppFont.body())
+                        .foregroundStyle(theme.ink)
                     Text(url.deletingLastPathComponent().path)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(Theme.inkTertiary)
+                        .font(AppFont.monoCaption())
+                        .foregroundStyle(theme.inkTertiary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
                 Spacer()
             }
             .padding(.horizontal, 12).padding(.vertical, 8)
-            .background(hovered ? Theme.cardHover : Color.clear)
+            .background(hovered ? theme.cardHover : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
@@ -182,6 +216,7 @@ struct RecentProjectRow: View {
 
 struct WorkspaceView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
@@ -199,7 +234,7 @@ struct WorkspaceView: View {
             if appState.consoleVisible {
                 ConsoleView()
                     .frame(height: 200)
-                    .background(Theme.consoleBackground)
+                    .background(theme.consoleBackground)
             }
         }
     }
@@ -249,15 +284,16 @@ struct WorkspaceToolbar: ToolbarContent {
 
 struct ProjectBadge: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
 
     var body: some View {
         if let project = appState.project {
             HStack(spacing: 10) {
-                Circle().fill(Theme.accent).frame(width: 8, height: 8)
+                Circle().fill(theme.accent).frame(width: 8, height: 8)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(project.config.title.isEmpty ? project.root.lastPathComponent : project.config.title)
-                        .font(.system(.body, design: .serif).weight(.semibold))
-                        .foregroundStyle(Theme.ink)
+                        .font(AppFont.headline())
+                        .foregroundStyle(theme.ink)
                     HStack(spacing: 8) {
                         Text("\(project.posts.count) 文章")
                         if let last = appState.lastBuild {
@@ -265,8 +301,8 @@ struct ProjectBadge: View {
                             Text("上次构建 \(last.fileCount) 文件 · \(String(format: "%.1f", last.elapsed))s")
                         }
                     }
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(Theme.inkTertiary)
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
                 }
             }
         }

@@ -42,17 +42,15 @@ public enum MarkdownRenderer {
             }
             // 标题
             if let hashMatch = line.range(of: #"^(#{1,6})\s+(.*)$"#, options: .regularExpression) {
-                let m = String(line[hashMatch])
-                if let r = m.range(of: #"^(#{1,6})\s+(.*)$"#, options: .regularExpression) {
-                    let groups = matches(in: m, pattern: #"^(#{1,6})\s+(.*)$"#)
-                    if groups.count >= 3 {
-                        let level = groups[1].count
-                        let title = renderInline(groups[2])
-                        out += "<h\(level)>\(title)</h\(level)>\n"
-                        i += 1
-                        continue
-                    }
+                let groups = matches(in: line, pattern: #"^(#{1,6})\s+(.*)$"#)
+                if groups.count >= 3 {
+                    let level = groups[1].count
+                    let title = renderInline(groups[2])
+                    out += "<h\(level)>\(title)</h\(level)>\n"
+                    i += 1
+                    continue
                 }
+                _ = hashMatch
             }
             // 引用
             if line.hasPrefix("> ") || line == ">" {
@@ -123,10 +121,8 @@ public enum MarkdownRenderer {
     // MARK: - 内联渲染
 
     public static func renderInline(_ s: String) -> String {
-        var t = s
-        // 短代码占位：{% name params %} -> 渲染为 span.shortcode
-        t = expandShortcodes(t)
-        // 图片 ![alt](url)
+        var t = expandShortcodes(s)
+        // 图片 ![alt](url) —— 必须先于链接
         t = replaceRegex(t, pattern: #"!\[([^\]]*)\]\(([^\s)]+)(?:\s+\"([^\"]*)\")?\)"#) { m in
             let alt = m[1].htmlEscaped
             let url = m[2].htmlEscaped
@@ -137,22 +133,105 @@ public enum MarkdownRenderer {
         t = replaceRegex(t, pattern: #"\[([^\]]+)\]\(([^\s)]+)(?:\s+\"([^\"]*)\")?\)"#) { m in
             return "<a href=\"\(m[2].htmlEscaped)\">\(renderInline(m[1]))</a>"
         }
-        // 粗体 + 斜体
-        t = t.replacingOccurrences(of: "***", with: "<b><i>")
-        t = t.replacingOccurrences(of: "**", with: "<b>")
-        t = t.replacingOccurrences(of: "__", with: "<b>")
-        t = t.replacingOccurrences(of: "*", with: "<i>")
-        t = t.replacingOccurrences(of: "_", with: "<i>")
-        // 代码
-        t = replaceRegex(t, pattern: "`([^`]+)`") { m in "<code>\(m[1].htmlEscaped)</code>" }
-        // 删除线
+        // 行内代码：先抽出占位，保护内部不被粗体/斜体破坏
+        var codeStash: [String] = []
+        t = replaceRegex(t, pattern: "`([^`]+)`") { m in
+            let token = "\u{0001}\(codeStash.count)\u{0002}"
+            codeStash.append("<code>\(m[1].htmlEscaped)</code>")
+            return token
+        }
+        // 删除线 ~~text~~
         t = replaceRegex(t, pattern: "~~(.+?)~~") { m in "<del>\(m[1])</del>" }
+        // 粗体 / 斜体 —— 单次扫描避免 O(n²)
+        t = applyEmphasis(t)
+        // 恢复行内代码占位
+        if !codeStash.isEmpty {
+            for (i, html) in codeStash.enumerated() {
+                t = t.replacingOccurrences(of: "\u{0001}\(i)\u{0002}", with: html)
+            }
+        }
         // 硬换行
         t = t.replacingOccurrences(of: "  \n", with: "<br/>\n")
-        t = t.replacingOccurrences(of: "\\n", with: "<br/>\n")
         // 自动链接
         t = replaceRegex(t, pattern: #"<(https?://[^>]+)>"#) { m in "<a href=\"\(m[1])\">\(m[1])</a>" }
         return t
+    }
+
+    /// 单次扫描处理 *** / ** / __ / * / _,避免对全字符串做多次 `replacingOccurrences` 引发 O(n²)。
+    static func applyEmphasis(_ s: String) -> String {
+        let chars = Array(s)
+        var out = ""
+        out.reserveCapacity(s.count)
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            // *** 粗斜体 ***
+            if c == "*" && i + 2 < chars.count && chars[i + 1] == "*" && chars[i + 2] == "*" {
+                if let end = findClosing(of: "***", in: chars, from: i + 3) {
+                    let inner = String(chars[i + 3..<end])
+                    out += "<b><i>\(inner)</i></b>"
+                    i = end + 3
+                    continue
+                }
+            }
+            // ** 粗体 **
+            if c == "*" && i + 1 < chars.count && chars[i + 1] == "*" {
+                if let end = findClosing(of: "**", in: chars, from: i + 2) {
+                    let inner = String(chars[i + 2..<end])
+                    out += "<b>\(inner)</b>"
+                    i = end + 2
+                    continue
+                }
+            }
+            // __ 粗体 __
+            if c == "_" && i + 1 < chars.count && chars[i + 1] == "_" {
+                if let end = findClosing(of: "__", in: chars, from: i + 2) {
+                    let inner = String(chars[i + 2..<end])
+                    out += "<b>\(inner)</b>"
+                    i = end + 2
+                    continue
+                }
+            }
+            // * 斜体 *
+            if c == "*" {
+                if let end = findClosing(of: "*", in: chars, from: i + 1) {
+                    let inner = String(chars[i + 1..<end])
+                    out += "<i>\(inner)</i>"
+                    i = end + 1
+                    continue
+                }
+            }
+            // _ 斜体 _
+            if c == "_" {
+                if let end = findClosing(of: "_", in: chars, from: i + 1) {
+                    let inner = String(chars[i + 1..<end])
+                    out += "<i>\(inner)</i>"
+                    i = end + 1
+                    continue
+                }
+            }
+            out.append(c)
+            i += 1
+        }
+        return out
+    }
+
+    /// 寻找下一个完整的 `token`,从 from 起;若不存在则返回 nil。
+    static func findClosing(of token: String, in chars: [Character], from start: Int) -> Int? {
+        let n = token.count
+        var i = start
+        while i + n <= chars.count {
+            var match = true
+            for k in 0..<n {
+                if chars[i + k] != token[token.index(token.startIndex, offsetBy: k)] {
+                    match = false
+                    break
+                }
+            }
+            if match { return i }
+            i += 1
+        }
+        return nil
     }
 
     static func expandShortcodes(_ s: String) -> String {
