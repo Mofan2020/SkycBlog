@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'blog' in project 'SkycBlog'
+➜ Explicit dependency on target 'SkycBlogCore' in project 'SkycBlog'
+Target 'SkycBlogCore' in project 'SkycBlog' (no dependencies)

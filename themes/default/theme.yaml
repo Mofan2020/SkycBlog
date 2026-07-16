@@ -1,0 +1,16 @@
+name: default
+version: 1.0.0
+description: SkycBlog 内置默认主题
+author: SkycBlog Team
+config:
+  colors:
+    primary: "#3b82f6"
+    background: "#ffffff"
+    text: "#1f2937"
+    accent: "#ef4444"
+  menu:
+    - { title: "首页", url: "/" }
+    - { title: "归档", url: "/archives/" }
+    - { title: "相册", url: "/albums/" }
+    - { title: "关于", url: "/about/" }
+  paginationSize: 10

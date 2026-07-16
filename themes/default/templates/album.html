@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="{{site.language}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="{{site.description}}"/>
+  <link rel="alternate" type="application/rss+xml" title="{{site.title}}" href="/rss.xml"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <title>{{site.title}}</title>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="site-title" href="/">{{site.title}}</a>
+    <nav class="site-nav">
+    {{#each theme.menu}}
+      <a href="{{url}}">{{title}}</a>
+    {{/each}}
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <article class="album-detail">
+    <h1>{{album.title}}</h1>
+    <div class="album-content">{{{album.content}}}</div>
+    <div class="media-grid">
+      {{#each media}}
+      <figure class="media-item" data-type="{{type}}">
+        <img class="media-thumb" src="{{url}}" loading="lazy" data-full="{{url}}" data-exif="{{exifSummary}}" alt="{{filename}}"/>
+        {{#if exifSummary}}<figcaption>{{exifSummary}}</figcaption>{{/if}}
+      </figure>
+      {{/each}}
+    </div>
+  </article>
+  <div class="lightbox" id="lightbox" style="display:none">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-img" alt=""/>
+    <div class="lightbox-exif" id="lightbox-exif"></div>
+  </div>
+</main>
+<script src="/static/js/lightbox.js"></script>
+<footer class="site-footer">
+  <div class="container">
+    <p>© {{year}} {{site.title}} · Powered by <a href="https://github.com/skycblog/skycblog">SkycBlog</a></p>
+  </div>
+</footer>
+</body>
+</html>

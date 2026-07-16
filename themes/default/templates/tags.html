@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="{{site.language}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="{{site.description}}"/>
+  <link rel="alternate" type="application/rss+xml" title="{{site.title}}" href="/rss.xml"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <title>{{site.title}}</title>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="site-title" href="/">{{site.title}}</a>
+    <nav class="site-nav">
+    {{#each theme.menu}}
+      <a href="{{url}}">{{title}}</a>
+    {{/each}}
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <h1>标签</h1>
+  <div class="tag-cloud">
+    {{#each tags}}
+    <a class="tag" href="{{url}}">{{name}} <span class="count">({{count}})</span></a>
+    {{/each}}
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>© {{year}} {{site.title}} · Powered by <a href="https://github.com/skycblog/skycblog">SkycBlog</a></p>
+  </div>
+</footer>
+</body>
+</html>

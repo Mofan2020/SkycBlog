@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="{{site.language}}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="{{site.description}}"/>
+  <link rel="alternate" type="application/rss+xml" title="{{site.title}}" href="/rss.xml"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <title>{{site.title}}</title>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="site-title" href="/">{{site.title}}</a>
+    <nav class="site-nav">
+    {{#each theme.menu}}
+      <a href="{{url}}">{{title}}</a>
+    {{/each}}
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">{{title}}</h1>
+      <div class="post-meta">
+        <time datetime="{{isoDate}}">{{dateString}}</time>
+        <span class="tags">{{#each tags}}<a class="tag" href="/tags/{{this}}/">#{{this}}</a> {{/each}}</span>
+        <span class="categories">{{#each categories}}<a href="/categories/{{this}}/">{{this}}</a> {{/each}}</span>
+      </div>
+    </header>
+    <div class="post-content">
+      {{{content}}}
+    </div>
+    <footer class="post-footer">
+      <a href="/">← 返回首页</a>
+    </footer>
+  </article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>© {{year}} {{site.title}} · Powered by <a href="https://github.com/skycblog/skycblog">SkycBlog</a></p>
+  </div>
+</footer>
+</body>
+</html>

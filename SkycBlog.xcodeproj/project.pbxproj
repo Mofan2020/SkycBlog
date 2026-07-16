@@ -1,0 +1,766 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		038396D7A5F7B86556311CF8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A11D2E1C5A6128973FCA10F /* ContentView.swift */; };
+		095FA32911CC8EF1B24982E2 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB1F9C5A758D7EF53C0A6B4 /* Utils.swift */; };
+		0C4CDCC63B95F9C91FFBCFBA /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0C6901E420E09676902863F9 /* BuildCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912FF5541A843C1E9095E49E /* BuildCommand.swift */; };
+		0E00399371C9BF6385845D81 /* MiniYAML.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2987CEF6CD797203F607966 /* MiniYAML.swift */; };
+		1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */; };
+		21C3A4624983E1D6E877A9DB /* BlogCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6968851F277A935794EE6AE6 /* BlogCLI.swift */; };
+		244D09DADF49A428FB54D565 /* Builder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33BA4951A726FF945D63E69 /* Builder.swift */; };
+		31373037844FE1A8D4CFE5FA /* SiteConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB8C56D8B6894B336433B39 /* SiteConfig.swift */; };
+		3D739F294FF9A1C0B79CA6A3 /* Deploy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88CCD3A16D73C7F158AA16F5 /* Deploy.swift */; };
+		46134DCE11FD64E758FE4CEC /* Outputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6236FC29D7EB717DE5F6A7ED /* Outputs.swift */; };
+		4FCB06A4F14B484143B38311 /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		61E51C8ED4D1DD6ABFC0C8E5 /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD8FAA4736220CC67F75537 /* PluginManager.swift */; };
+		62496C7C15B9FF2FC8E89975 /* EXIFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */; };
+		7B265BC744F982B5E19DF5F4 /* MarkdownRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE38DAEC28EFBC41EDBF713 /* MarkdownRenderer.swift */; };
+		8BDDC683CACCEEE62F64D5BD /* NewCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4328AEE98C4559270C427997 /* NewCommand.swift */; };
+		98AB40B1CD821C2BFAFB96C0 /* SkycBlogCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; };
+		9ACEAE0E8A258CBBCA84A80D /* LocalServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E24840EBECA4D0A8644485D /* LocalServer.swift */; };
+		9B45CF39E678510A00B7708B /* ServeCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1435ED9AE6EE3AF557B93D9A /* ServeCommand.swift */; };
+		9CCA4DD98677A744AE718171 /* BlogProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69B22B06EA05740FC27028E2 /* BlogProject.swift */; };
+		AB0B57A63A4EA293F05DA690 /* KeychainCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA3F68D5091A2CDE2A82CCB /* KeychainCommand.swift */; };
+		AB31469AC29BA9E90B0E8E47 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A0FA94F533C7104F8B1D13 /* Keychain.swift */; };
+		AE6720FB2B751E169C7AD159 /* EmbeddedTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */; };
+		B78250015F009733A0D95560 /* ProjectScaffold.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26231D2B9B469FE72A4EA145 /* ProjectScaffold.swift */; };
+		C1945B5D1C076185784451EB /* ContentLists.swift in Sources */ = {isa = PBXBuildFile; fileRef = 394BF6BE5A4190A712C67D14 /* ContentLists.swift */; };
+		C49C0A85308623B1D56F45C7 /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C212393995203A0D2C203C7D /* ContentLoader.swift */; };
+		C77A0AD980AD4CC832416D05 /* DeployCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05DD818386176E0B7425A16D /* DeployCommand.swift */; };
+		C992A8595AB165071A1CCD3C /* ThemeCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */; };
+		D323321BC4AECAE5072C9D61 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */; };
+		D5B81AC1B9ABC4C9C1734ADC /* HTMLMinifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */; };
+		DE31CFD64A9B103181915E8D /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */; };
+		E0AD57A922CA231E58EAFD1C /* InitCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A33AA6CE9B5D52FEE1CCF3F2 /* InitCommand.swift */; };
+		EE93F9A5D72982E7555E0C99 /* WebPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C731EF0EC4EE82632F4E615A /* WebPreview.swift */; };
+		F485521C2277BA1493F5798F /* SkycBlogCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7669BC62F0918C25822BF56B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46C2EBBFBB520B36E5DCC0BD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 919EE2B630D3F37A2DC2C7EC;
+			remoteInfo = SkycBlogCore;
+		};
+		E4FAB4AA2F88BEEE55B095A5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46C2EBBFBB520B36E5DCC0BD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 919EE2B630D3F37A2DC2C7EC;
+			remoteInfo = SkycBlogCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		03D97B6567198C1AAA794E67 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				4FCB06A4F14B484143B38311 /* SkycBlogCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C820207ECA8B06482EE2691F /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				0C4CDCC63B95F9C91FFBCFBA /* SkycBlogCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		05DD818386176E0B7425A16D /* DeployCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeployCommand.swift; sourceTree = "<group>"; };
+		1435ED9AE6EE3AF557B93D9A /* ServeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServeCommand.swift; sourceTree = "<group>"; };
+		1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeCommand.swift; sourceTree = "<group>"; };
+		1BB8C56D8B6894B336433B39 /* SiteConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteConfig.swift; sourceTree = "<group>"; };
+		26231D2B9B469FE72A4EA145 /* ProjectScaffold.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectScaffold.swift; sourceTree = "<group>"; };
+		394BF6BE5A4190A712C67D14 /* ContentLists.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLists.swift; sourceTree = "<group>"; };
+		4328AEE98C4559270C427997 /* NewCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewCommand.swift; sourceTree = "<group>"; };
+		4DA33F8313A6A379F4B2B179 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4DD8FAA4736220CC67F75537 /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
+		55A0FA94F533C7104F8B1D13 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		5C54F3C6096A4AE880B1AE1A /* blog */ = {isa = PBXFileReference; includeInIndex = 0; path = blog; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLMinifier.swift; sourceTree = "<group>"; };
+		6236FC29D7EB717DE5F6A7ED /* Outputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outputs.swift; sourceTree = "<group>"; };
+		67317FC7516245A79055D606 /* SkycBlogCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SkycBlogCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6968851F277A935794EE6AE6 /* BlogCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogCLI.swift; sourceTree = "<group>"; };
+		69B22B06EA05740FC27028E2 /* BlogProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogProject.swift; sourceTree = "<group>"; };
+		88CCD3A16D73C7F158AA16F5 /* Deploy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deploy.swift; sourceTree = "<group>"; };
+		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkycBlogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		912FF5541A843C1E9095E49E /* BuildCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildCommand.swift; sourceTree = "<group>"; };
+		93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkycBlogApp.swift; sourceTree = "<group>"; };
+		9A11D2E1C5A6128973FCA10F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9E24840EBECA4D0A8644485D /* LocalServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalServer.swift; sourceTree = "<group>"; };
+		9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedTheme.swift; sourceTree = "<group>"; };
+		A33AA6CE9B5D52FEE1CCF3F2 /* InitCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitCommand.swift; sourceTree = "<group>"; };
+		A8178C98D419BFA4E550FD2F /* SkycBlog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SkycBlog.entitlements; sourceTree = "<group>"; };
+		B2987CEF6CD797203F607966 /* MiniYAML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniYAML.swift; sourceTree = "<group>"; };
+		BBA3F68D5091A2CDE2A82CCB /* KeychainCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainCommand.swift; sourceTree = "<group>"; };
+		C212393995203A0D2C203C7D /* ContentLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
+		C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EXIFReader.swift; sourceTree = "<group>"; };
+		C731EF0EC4EE82632F4E615A /* WebPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPreview.swift; sourceTree = "<group>"; };
+		CAB1F9C5A758D7EF53C0A6B4 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		CBE38DAEC28EFBC41EDBF713 /* MarkdownRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderer.swift; sourceTree = "<group>"; };
+		D33BA4951A726FF945D63E69 /* Builder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Builder.swift; sourceTree = "<group>"; };
+		E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1AF601DC2AAEF5BCFCA613C7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F485521C2277BA1493F5798F /* SkycBlogCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BF36EAEFE330485893405E2A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				98AB40B1CD821C2BFAFB96C0 /* SkycBlogCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0220729CD44C344FC1D34A0D = {
+			isa = PBXGroup;
+			children = (
+				87C881E7BC0DF13F38EA4532 /* App */,
+				BB936A06525ECAE5B4693A16 /* CLI */,
+				D55B31B8B2B80AFDB55FF06C /* Core */,
+				B9809AF11EE9C748CE67104F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		11BAE8A03FD6128580E26491 /* Builder */ = {
+			isa = PBXGroup;
+			children = (
+				D33BA4951A726FF945D63E69 /* Builder.swift */,
+				5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */,
+				6236FC29D7EB717DE5F6A7ED /* Outputs.swift */,
+				26231D2B9B469FE72A4EA145 /* ProjectScaffold.swift */,
+			);
+			path = Builder;
+			sourceTree = "<group>";
+		};
+		26E8A63F47ECE0BC64655A1B /* Deploy */ = {
+			isa = PBXGroup;
+			children = (
+				88CCD3A16D73C7F158AA16F5 /* Deploy.swift */,
+			);
+			path = Deploy;
+			sourceTree = "<group>";
+		};
+		322973A5ADFAD14F41330F4F /* Themes */ = {
+			isa = PBXGroup;
+			children = (
+				A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */,
+				9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */,
+			);
+			path = Themes;
+			sourceTree = "<group>";
+		};
+		47AA4CC6DA98A4DD081456D4 /* Templates */ = {
+			isa = PBXGroup;
+			children = (
+				E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */,
+			);
+			path = Templates;
+			sourceTree = "<group>";
+		};
+		73377D7A6464B9C074C526FC /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				55A0FA94F533C7104F8B1D13 /* Keychain.swift */,
+				B2987CEF6CD797203F607966 /* MiniYAML.swift */,
+				CAB1F9C5A758D7EF53C0A6B4 /* Utils.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		87C881E7BC0DF13F38EA4532 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				69B22B06EA05740FC27028E2 /* BlogProject.swift */,
+				394BF6BE5A4190A712C67D14 /* ContentLists.swift */,
+				9A11D2E1C5A6128973FCA10F /* ContentView.swift */,
+				4DA33F8313A6A379F4B2B179 /* Info.plist */,
+				A8178C98D419BFA4E550FD2F /* SkycBlog.entitlements */,
+				93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */,
+				C731EF0EC4EE82632F4E615A /* WebPreview.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A1D29A5C0BCEF495E2CA7482 /* Server */ = {
+			isa = PBXGroup;
+			children = (
+				9E24840EBECA4D0A8644485D /* LocalServer.swift */,
+			);
+			path = Server;
+			sourceTree = "<group>";
+		};
+		ABA3A8120A7AB2E55BC263BE /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+				4DD8FAA4736220CC67F75537 /* PluginManager.swift */,
+			);
+			path = Plugins;
+			sourceTree = "<group>";
+		};
+		B9809AF11EE9C748CE67104F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C54F3C6096A4AE880B1AE1A /* blog */,
+				8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */,
+				67317FC7516245A79055D606 /* SkycBlogCore.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BB936A06525ECAE5B4693A16 /* CLI */ = {
+			isa = PBXGroup;
+			children = (
+				6968851F277A935794EE6AE6 /* BlogCLI.swift */,
+				912FF5541A843C1E9095E49E /* BuildCommand.swift */,
+				05DD818386176E0B7425A16D /* DeployCommand.swift */,
+				A33AA6CE9B5D52FEE1CCF3F2 /* InitCommand.swift */,
+				BBA3F68D5091A2CDE2A82CCB /* KeychainCommand.swift */,
+				4328AEE98C4559270C427997 /* NewCommand.swift */,
+				1435ED9AE6EE3AF557B93D9A /* ServeCommand.swift */,
+				1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */,
+			);
+			path = CLI;
+			sourceTree = "<group>";
+		};
+		BD1F8D27CB3A23431C28AB33 /* Content */ = {
+			isa = PBXGroup;
+			children = (
+				C212393995203A0D2C203C7D /* ContentLoader.swift */,
+				CBE38DAEC28EFBC41EDBF713 /* MarkdownRenderer.swift */,
+			);
+			path = Content;
+			sourceTree = "<group>";
+		};
+		C335223F2F598DA07DF66550 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				1BB8C56D8B6894B336433B39 /* SiteConfig.swift */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
+		D1C3C4442566C859F5F82ABB /* EXIF */ = {
+			isa = PBXGroup;
+			children = (
+				C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */,
+			);
+			path = EXIF;
+			sourceTree = "<group>";
+		};
+		D55B31B8B2B80AFDB55FF06C /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				11BAE8A03FD6128580E26491 /* Builder */,
+				C335223F2F598DA07DF66550 /* Configuration */,
+				BD1F8D27CB3A23431C28AB33 /* Content */,
+				26E8A63F47ECE0BC64655A1B /* Deploy */,
+				D1C3C4442566C859F5F82ABB /* EXIF */,
+				ABA3A8120A7AB2E55BC263BE /* Plugins */,
+				A1D29A5C0BCEF495E2CA7482 /* Server */,
+				47AA4CC6DA98A4DD081456D4 /* Templates */,
+				322973A5ADFAD14F41330F4F /* Themes */,
+				73377D7A6464B9C074C526FC /* Utils */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		66613F4A41F701A0961889C6 /* SkycBlogApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0DEA520881D8BCBB14D64C9 /* Build configuration list for PBXNativeTarget "SkycBlogApp" */;
+			buildPhases = (
+				F86295E74B06216284EFDAD0 /* Sources */,
+				BF36EAEFE330485893405E2A /* Frameworks */,
+				03D97B6567198C1AAA794E67 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0E4B0E52A1F8D0876F88CFE6 /* PBXTargetDependency */,
+			);
+			name = SkycBlogApp;
+			packageProductDependencies = (
+			);
+			productName = SkycBlogApp;
+			productReference = 8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		919EE2B630D3F37A2DC2C7EC /* SkycBlogCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FDBE72026B0B6D129DF104C7 /* Build configuration list for PBXNativeTarget "SkycBlogCore" */;
+			buildPhases = (
+				66C8BB94D6D1AB637568A359 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SkycBlogCore;
+			packageProductDependencies = (
+			);
+			productName = SkycBlogCore;
+			productReference = 67317FC7516245A79055D606 /* SkycBlogCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		F5C47A205D035F67F7CA6172 /* blog */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9752140D40488474AE24F4EB /* Build configuration list for PBXNativeTarget "blog" */;
+			buildPhases = (
+				DC95B6E556C615BE8FF19965 /* Sources */,
+				1AF601DC2AAEF5BCFCA613C7 /* Frameworks */,
+				C820207ECA8B06482EE2691F /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8F5E2859D69CC99F3FAFE9C7 /* PBXTargetDependency */,
+			);
+			name = blog;
+			packageProductDependencies = (
+			);
+			productName = blog;
+			productReference = 5C54F3C6096A4AE880B1AE1A /* blog */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46C2EBBFBB520B36E5DCC0BD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					66613F4A41F701A0961889C6 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+					919EE2B630D3F37A2DC2C7EC = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					F5C47A205D035F67F7CA6172 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 3846C7B7248CB3F33E07412F /* Build configuration list for PBXProject "SkycBlog" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 0220729CD44C344FC1D34A0D;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B9809AF11EE9C748CE67104F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				66613F4A41F701A0961889C6 /* SkycBlogApp */,
+				919EE2B630D3F37A2DC2C7EC /* SkycBlogCore */,
+				F5C47A205D035F67F7CA6172 /* blog */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		66C8BB94D6D1AB637568A359 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				244D09DADF49A428FB54D565 /* Builder.swift in Sources */,
+				C49C0A85308623B1D56F45C7 /* ContentLoader.swift in Sources */,
+				3D739F294FF9A1C0B79CA6A3 /* Deploy.swift in Sources */,
+				62496C7C15B9FF2FC8E89975 /* EXIFReader.swift in Sources */,
+				AE6720FB2B751E169C7AD159 /* EmbeddedTheme.swift in Sources */,
+				D5B81AC1B9ABC4C9C1734ADC /* HTMLMinifier.swift in Sources */,
+				AB31469AC29BA9E90B0E8E47 /* Keychain.swift in Sources */,
+				9ACEAE0E8A258CBBCA84A80D /* LocalServer.swift in Sources */,
+				7B265BC744F982B5E19DF5F4 /* MarkdownRenderer.swift in Sources */,
+				0E00399371C9BF6385845D81 /* MiniYAML.swift in Sources */,
+				46134DCE11FD64E758FE4CEC /* Outputs.swift in Sources */,
+				61E51C8ED4D1DD6ABFC0C8E5 /* PluginManager.swift in Sources */,
+				B78250015F009733A0D95560 /* ProjectScaffold.swift in Sources */,
+				31373037844FE1A8D4CFE5FA /* SiteConfig.swift in Sources */,
+				DE31CFD64A9B103181915E8D /* TemplateEngine.swift in Sources */,
+				D323321BC4AECAE5072C9D61 /* ThemeManager.swift in Sources */,
+				095FA32911CC8EF1B24982E2 /* Utils.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DC95B6E556C615BE8FF19965 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				21C3A4624983E1D6E877A9DB /* BlogCLI.swift in Sources */,
+				0C6901E420E09676902863F9 /* BuildCommand.swift in Sources */,
+				C77A0AD980AD4CC832416D05 /* DeployCommand.swift in Sources */,
+				E0AD57A922CA231E58EAFD1C /* InitCommand.swift in Sources */,
+				AB0B57A63A4EA293F05DA690 /* KeychainCommand.swift in Sources */,
+				8BDDC683CACCEEE62F64D5BD /* NewCommand.swift in Sources */,
+				9B45CF39E678510A00B7708B /* ServeCommand.swift in Sources */,
+				C992A8595AB165071A1CCD3C /* ThemeCommand.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F86295E74B06216284EFDAD0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CCA4DD98677A744AE718171 /* BlogProject.swift in Sources */,
+				C1945B5D1C076185784451EB /* ContentLists.swift in Sources */,
+				038396D7A5F7B86556311CF8 /* ContentView.swift in Sources */,
+				1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */,
+				EE93F9A5D72982E7555E0C99 /* WebPreview.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0E4B0E52A1F8D0876F88CFE6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 919EE2B630D3F37A2DC2C7EC /* SkycBlogCore */;
+			targetProxy = 7669BC62F0918C25822BF56B /* PBXContainerItemProxy */;
+		};
+		8F5E2859D69CC99F3FAFE9C7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 919EE2B630D3F37A2DC2C7EC /* SkycBlogCore */;
+			targetProxy = E4FAB4AA2F88BEEE55B095A5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		367FBB20A3BD6D13CA4D150D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "@rpath";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.skycblog.SkycBlogCore;
+				PRODUCT_NAME = SkycBlogCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = NO;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		61DFCC8BF05A22A7088D82C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/SkycBlog.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.skycblog.app;
+				PRODUCT_NAME = SkycBlog;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		6F6A0775FE6AA4EFF11DF595 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "@rpath";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.skycblog.SkycBlogCore;
+				PRODUCT_NAME = SkycBlogCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = NO;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		7B0F147DA51D6A1FC9B825E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.skycblog.cli;
+				PRODUCT_NAME = blog;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		85F89F0E7F7583E88A2BE300 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-function-bodies=300";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		DF74182EE8F0C56A1D14FA0F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/SkycBlog.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.skycblog.app;
+				PRODUCT_NAME = SkycBlog;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E2961F238C2CC5341973E287 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.skycblog.cli;
+				PRODUCT_NAME = blog;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		EAD7B8F26753F61727E4D578 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-function-bodies=300";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3846C7B7248CB3F33E07412F /* Build configuration list for PBXProject "SkycBlog" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				85F89F0E7F7583E88A2BE300 /* Debug */,
+				EAD7B8F26753F61727E4D578 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9752140D40488474AE24F4EB /* Build configuration list for PBXNativeTarget "blog" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7B0F147DA51D6A1FC9B825E8 /* Debug */,
+				E2961F238C2CC5341973E287 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A0DEA520881D8BCBB14D64C9 /* Build configuration list for PBXNativeTarget "SkycBlogApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF74182EE8F0C56A1D14FA0F /* Debug */,
+				61DFCC8BF05A22A7088D82C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FDBE72026B0B6D129DF104C7 /* Build configuration list for PBXNativeTarget "SkycBlogCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				367FBB20A3BD6D13CA4D150D /* Debug */,
+				6F6A0775FE6AA4EFF11DF595 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 46C2EBBFBB520B36E5DCC0BD /* Project object */;
+}
