@@ -1,3 +1,0 @@
-framework module SkycBlogCore {
-  header "SkycBlogCore-Swift.h"
-}

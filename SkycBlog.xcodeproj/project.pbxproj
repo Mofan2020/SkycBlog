@@ -95,6 +95,7 @@
 
 /* Begin PBXFileReference section */
 		05DD818386176E0B7425A16D /* DeployCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeployCommand.swift; sourceTree = "<group>"; };
+		0991017B300999C40046DA1F /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		09A787A4AD0DA235562E1A08 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		1435ED9AE6EE3AF557B93D9A /* ServeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServeCommand.swift; sourceTree = "<group>"; };
 		1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeCommand.swift; sourceTree = "<group>"; };
@@ -107,7 +108,7 @@
 		4DA33F8313A6A379F4B2B179 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4DD8FAA4736220CC67F75537 /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
 		55A0FA94F533C7104F8B1D13 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
-		5C54F3C6096A4AE880B1AE1A /* blog */ = {isa = PBXFileReference; includeInIndex = 0; path = blog; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C54F3C6096A4AE880B1AE1A /* blog */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = text; path = blog; sourceTree = BUILT_PRODUCTS_DIR; };
 		5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLMinifier.swift; sourceTree = "<group>"; };
 		6236FC29D7EB717DE5F6A7ED /* Outputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outputs.swift; sourceTree = "<group>"; };
 		633CBB3977C50330BEA92CF2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -115,7 +116,7 @@
 		6968851F277A935794EE6AE6 /* BlogCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogCLI.swift; sourceTree = "<group>"; };
 		69B22B06EA05740FC27028E2 /* BlogProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogProject.swift; sourceTree = "<group>"; };
 		88CCD3A16D73C7F158AA16F5 /* Deploy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deploy.swift; sourceTree = "<group>"; };
-		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkycBlogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = SkycBlogApp.app; path = SkycBlog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		912FF5541A843C1E9095E49E /* BuildCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildCommand.swift; sourceTree = "<group>"; };
 		93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkycBlogApp.swift; sourceTree = "<group>"; };
 		9CE6FD798C84E3894DD8E84D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -162,6 +163,7 @@
 		0220729CD44C344FC1D34A0D = {
 			isa = PBXGroup;
 			children = (
+				0991017B300999C40046DA1F /* .gitignore */,
 				87C881E7BC0DF13F38EA4532 /* App */,
 				BB936A06525ECAE5B4693A16 /* CLI */,
 				D55B31B8B2B80AFDB55FF06C /* Core */,
