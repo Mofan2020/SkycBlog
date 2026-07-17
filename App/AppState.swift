@@ -31,6 +31,10 @@ final class AppState: ObservableObject {
     // MARK: 项目
     @Published var project: BlogProject? = nil
     @Published var recentProjects: [URL] = []
+    /// 当前激活的主题名称 (UI 与 Adapter 都会使用此字段, 磁盘上的 config.yaml 由 activateTheme 同步)
+    @Published var activeThemeName: String = ""
+    /// 在主题页右侧编辑的"当前选中的主题" (与 activeThemeName 不同: 用户即使未启用也可以查看/编辑任意主题)
+    @Published var selectedThemeName: String = ""
 
     // MARK: 状态
     @Published var isWorking: Bool = false
@@ -57,6 +61,7 @@ final class AppState: ObservableObject {
             let p = try BlogProject.load(root: url)
             self.project = p
             self.selectedPageID = p.posts.first?.id
+            self.activeThemeName = p.config.themeName
             log(.success("已打开项目：\(p.root.lastPathComponent)"))
             addRecent(url)
         } catch {
@@ -71,6 +76,7 @@ final class AppState: ObservableObject {
             let p = try BlogProject.load(root: target)
             self.project = p
             self.selectedPageID = p.posts.first?.id
+            self.activeThemeName = p.config.themeName
             log(.success("已创建项目：\(name)"))
             addRecent(target)
         } catch {
@@ -85,6 +91,7 @@ final class AppState: ObservableObject {
         self.lastBuild = nil
         self.previewURL = nil
         self.editor = EditorState()
+        self.activeThemeName = ""
     }
 
     func revealProjectInFinder() {
@@ -360,20 +367,67 @@ final class AppState: ObservableObject {
     /// 列出项目 themes/ 下所有主题, 标记当前激活的
     func listThemes() -> [(info: ThemeInfo, isActive: Bool)] {
         guard let project = project else { return [] }
-        let active = project.config.themeName
+        // 优先用内存中的 activeThemeName (它是 @Published, 切换会立刻反映)
+        let active = activeThemeName.isEmpty ? project.config.themeName : activeThemeName
         let list = ThemeManager.listThemes(projectRoot: project.root.path)
         return list.map { ($0, $0.name == active) }
     }
 
-    /// 激活一个主题 (写 config.yaml 的 theme 字段), 激活后自动 refresh
+    /// 激活一个主题 (写 config.yaml 的 theme 字段, 同步内存 activeThemeName, 触发 UI 刷新)
     func activateTheme(name: String) {
         guard let project = project else { return }
         let result = ThemeManager.activateTheme(name: name, projectRoot: project.root.path)
         if result.ok {
-            project.refresh()
+            // 1) 更新内存中的 activeThemeName -> UI 立即看到 isActive 变化
+            self.activeThemeName = name
+            // 2) 重新从磁盘加载 config, 以便后续构建读到最新的 themeName
+            if let updatedConfig = try? ConfigLoader.load(projectRoot: project.root.path) {
+                // 构造新 BlogProject (config 是 let, 无法在原对象上替换)
+                let refreshed = BlogProject(root: project.root, config: updatedConfig)
+                refreshed.refresh()
+                self.project = refreshed
+                self.selectedPageID = refreshed.posts.first?.id
+            } else {
+                project.refresh()
+            }
             log(.success(result.message))
         } else {
             log(.error(result.message))
+        }
+    }
+
+    /// 加载主题配置文件 (返回 ThemeConfigFile 或 nil)
+    func loadThemeConfig(name: String) -> ThemeManager.ThemeConfigFile? {
+        guard let project = project else { return nil }
+        return ThemeManager.locateThemeConfig(themeName: name, projectRoot: project.root.path)
+    }
+
+    /// 保存主题配置. dict 或 rawOverride 至少传一个.
+    func saveThemeConfig(name: String, dict: [String: Any]? = nil, rawOverride: String? = nil) -> (ok: Bool, message: String) {
+        guard let project = project else { return (false, "未打开项目") }
+        guard let cfg = ThemeManager.locateThemeConfig(themeName: name, projectRoot: project.root.path) else {
+            return (false, "主题目录不存在: \(name)")
+        }
+        let result = ThemeManager.saveThemeConfig(cfg, dict: dict, rawOverride: rawOverride)
+        if result.ok {
+            log(.success("已保存主题 \(name) 的配置: \(cfg.relativePath)"))
+        } else {
+            log(.error(result.message))
+        }
+        return result
+    }
+
+    /// 用户在主题列表中选中了一个主题 (不一定是启用). 同时关闭"主题已激活"高亮闪烁.
+    func selectTheme(name: String) {
+        if selectedThemeName != name {
+            selectedThemeName = name
+        }
+    }
+
+    /// 用户在切换页签或新建项目时, 重置主题选择
+    func clearThemeSelection() {
+        if !selectedThemeName.isEmpty {
+            selectedThemeName = ""
         }
     }
 

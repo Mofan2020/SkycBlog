@@ -266,6 +266,104 @@ public enum ThemeManager {
         return nil
     }
 
+    // MARK: - 主题配置读写（让 UI 能直接修改 _config.yml / theme.yaml / theme.toml）
+
+    /// 主题配置文件元信息
+    public struct ThemeConfigFile {
+        public let themeName: String
+        public let themeKind: ThemeKind
+        /// 配置文件相对 themes/<name>/ 的路径（例如 "_config.yml"）
+        public let relativePath: String
+        /// "yaml" / "toml" / "json"
+        public let format: String
+        /// 配置文件磁盘上的完整路径
+        public let absolutePath: String
+        /// 解析后的键值树（Any = String/Int/Double/Bool/[Any]/[String:Any]/NSNull）
+        public var dict: [String: Any]
+        /// 原始文件全文（用于高级模式）
+        public var rawText: String
+    }
+
+    /// 定位一个主题的配置文件. Hexo → themes/<name>/_config.yml (YAML),
+    /// Hugo → themes/<name>/theme.toml 或 theme.yaml 或 hugo.toml, SkycBlog → themes/<name>/theme.yaml.
+    /// 若文件不存在, 仍然返回一个 .rawText == "" 的 record (让 UI 可以创建默认内容).
+    public static func locateThemeConfig(themeName: String, projectRoot: String) -> ThemeConfigFile? {
+        let fm = FileManager.default
+        let themeDir = (projectRoot as NSString).appendingPathComponent("themes/\(themeName)")
+        guard fm.fileExists(atPath: themeDir) else { return nil }
+
+        let theme = listThemes(projectRoot: projectRoot).first { $0.name == themeName }
+        let kind = theme?.kind ?? .unknown
+
+        // 按主题类型找配置文件
+        let candidates: [(path: String, format: String)]
+        switch kind {
+        case .hexo:
+            candidates = [("_config.yml", "yaml")]
+        case .hugo:
+            candidates = [("theme.toml", "toml"), ("theme.yaml", "yaml")]
+        case .skyc:
+            candidates = [("theme.yaml", "yaml"), ("theme.yml", "yaml")]
+        case .unknown:
+            // 兜底: 按文件存在顺序
+            candidates = [
+                ("_config.yml", "yaml"),
+                ("theme.yaml", "yaml"),
+                ("theme.yml", "yaml"),
+                ("theme.toml", "toml"),
+                ("hugo.toml", "toml"),
+            ]
+        }
+
+        for (rel, fmt) in candidates {
+            let abs = (themeDir as NSString).appendingPathComponent(rel)
+            if fm.fileExists(atPath: abs) {
+                let text = (try? String(contentsOfFile: abs, encoding: .utf8)) ?? ""
+                let dict: [String: Any]
+                switch fmt {
+                case "yaml": dict = MiniYAML.load(text)
+                case "toml": dict = TOMLParser.parse(text)
+                default: dict = [:]
+                }
+                return ThemeConfigFile(themeName: themeName, themeKind: kind,
+                                       relativePath: rel, format: fmt,
+                                       absolutePath: abs, dict: dict, rawText: text)
+            }
+        }
+
+        // 没有任何配置文件 — 仍然返回空 record, UI 可让用户新建
+        let (rel, fmt) = candidates.first ?? ("theme.yaml", "yaml")
+        let abs = (themeDir as NSString).appendingPathComponent(rel)
+        return ThemeConfigFile(themeName: themeName, themeKind: kind,
+                               relativePath: rel, format: fmt,
+                               absolutePath: abs, dict: [:], rawText: "")
+    }
+
+    /// 保存主题配置: 把 dict 重新序列化为对应格式并写盘.
+    /// - Parameter rawOverride: 若非 nil, 直接以该字符串覆盖整个文件 (高级模式).
+    public static func saveThemeConfig(_ cfg: ThemeConfigFile, dict: [String: Any]? = nil, rawOverride: String? = nil) -> (ok: Bool, message: String) {
+        let fm = FileManager.default
+        let dir = (cfg.absolutePath as NSString).deletingLastPathComponent
+        do {
+            try fm.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            let text: String
+            if let raw = rawOverride {
+                text = raw
+            } else {
+                let d = dict ?? cfg.dict
+                switch cfg.format {
+                case "yaml": text = MiniYAML.dump(d)
+                case "toml": text = MiniTOML.dump(d)
+                default: text = MiniYAML.dump(d)
+                }
+            }
+            try text.write(toFile: cfg.absolutePath, atomically: true, encoding: .utf8)
+            return (true, "已保存 \(cfg.relativePath)")
+        } catch {
+            return (false, "保存失败: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - 主题安装
 
     /// 安装一个主题从本地目录到 themes/ 下（拷贝）。

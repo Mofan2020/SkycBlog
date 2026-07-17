@@ -288,3 +288,61 @@ public enum TOMLParser {
         return parts
     }
 }
+
+/// 极简 TOML 序列化器 (用于把 dict 写回 theme.toml).
+/// 仅支持项目配置所需的子集: 字符串/整数/浮点/布尔/数组/[String:Any] 嵌套.
+public enum MiniTOML {
+    public static func dump(_ root: [String: Any]) -> String {
+        var lines: [String] = []
+        // 顶层用 [section] 标头 (如果 root 中只有非嵌套标量, 也可省略; 但 Hugo theme.toml 一律用 section 风格)
+        // 简单起见: 把所有顶层 key 放一个 [theme] section, 顶层是 dict 的再用 [parent.child] 嵌套
+        for (k, v) in root.sorted(by: { $0.key < $1.key }) {
+            emitKeyValue(key: k, value: v, sectionPath: [], lines: &lines)
+        }
+        return lines.isEmpty ? "" : lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func emitKeyValue(key: String, value: Any, sectionPath: [String], lines: inout [String]) {
+        if let sub = value as? [String: Any] {
+            // 新 section (避免重复)
+            let newPath = sectionPath + [key]
+            if lines.count > 0 { lines.append("") } // section 之间空行
+            lines.append("[\(newPath.joined(separator: "."))]")
+            for (k, v) in sub.sorted(by: { $0.key < $1.key }) {
+                emitKeyValue(key: k, value: v, sectionPath: newPath, lines: &lines)
+            }
+        } else if let arr = value as? [Any] {
+            lines.append("\(key) = \(tomlArrayLiteral(arr))")
+        } else {
+            lines.append("\(key) = \(tomlScalar(value))")
+        }
+    }
+
+    private static func tomlScalar(_ v: Any) -> String {
+        if v is NSNull { return "\"\"" }
+        if let b = v as? Bool { return b ? "true" : "false" }
+        if let i = v as? Int { return String(i) }
+        if let d = v as? Double { return String(d) }
+        if let s = v as? String { return tomlStringLiteral(s) }
+        return tomlStringLiteral(String(describing: v))
+    }
+
+    private static func tomlStringLiteral(_ s: String) -> String {
+        // 用单引号包裹; 内部的反斜杠和单引号转义
+        let escaped = s.replacingOccurrences(of: "\\", with: "\\\\")
+                        .replacingOccurrences(of: "'", with: "\\'")
+                        .replacingOccurrences(of: "\n", with: "\\n")
+        return "'\(escaped)'"
+    }
+
+    private static func tomlArrayLiteral(_ arr: [Any]) -> String {
+        let inner = arr.map { v -> String in
+            if v is [String: Any] {
+                // inline table 不易表达, 跳过复杂对象
+                return "\"{...}\""
+            }
+            return tomlScalar(v)
+        }.joined(separator: ", ")
+        return "[\(inner)]"
+    }
+}

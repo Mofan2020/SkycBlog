@@ -11,8 +11,13 @@ struct DetailColumnView: View {
 
     var body: some View {
         Group {
-            if let pageID = appState.selectedPageID,
-               let page = currentPage(id: pageID) {
+            // 主题页: 选中主题时显示配置编辑面板
+            if appState.selection == .themes, !appState.selectedThemeName.isEmpty {
+                ThemeConfigEditorPanel()
+            }
+            // 文章编辑优先于预览/无选择
+            else if let pageID = appState.selectedPageID,
+                    let page = currentPage(id: pageID) {
                 EditorView(page: page)
             } else if let project = appState.project, appState.isServing, let url = appState.previewURL {
                 PreviewView(url: url, project: project)

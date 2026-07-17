@@ -982,11 +982,11 @@ struct FlowLayout: Layout {
 struct ThemeManagerView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
-    @State private var refresh: Bool = false
     @State private var showInstall: Bool = false
 
     private var items: [(info: ThemeInfo, isActive: Bool)] {
-        _ = refresh
+        // 访问 activeThemeName, 触发 SwiftUI 在它变化时重算本 View
+        _ = appState.activeThemeName
         return appState.listThemes()
     }
 
@@ -999,6 +999,8 @@ struct ThemeManagerView: View {
     }
 
     var body: some View {
+        // 显式引用 activeThemeName, 确保 @Published 变化时 body 被重新求值
+        let _ = appState.activeThemeName
         VStack(spacing: 0) {
             HStack {
                 Image(systemName: "paintpalette").foregroundStyle(theme.accent)
@@ -1033,7 +1035,6 @@ struct ThemeManagerView: View {
         .sheet(isPresented: $showInstall) {
             ThemeInstallSheet()
         }
-        .id(refresh) // 强制刷新
     }
 
     @ViewBuilder
@@ -1059,12 +1060,20 @@ struct ThemeManagerView: View {
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 12)], spacing: 12) {
                 ForEach(themes, id: \.info.id) { item in
-                    ThemeCard(info: item.info, isActive: item.isActive, onActivate: {
-                        appState.activateTheme(name: item.info.name)
-                        refresh.toggle()
-                     }, onReveal: {
-                        appState.revealThemeInFinder(name: item.info.name)
-                    })
+                    ThemeCard(
+                        info: item.info,
+                        isActive: item.isActive,
+                        isSelected: appState.selectedThemeName == item.info.name,
+                        onActivate: {
+                            appState.activateTheme(name: item.info.name)
+                        },
+                        onReveal: {
+                            appState.revealThemeInFinder(name: item.info.name)
+                        },
+                        onSelect: {
+                            appState.selectTheme(name: item.info.name)
+                        }
+                    )
                 }
             }
         }
@@ -1075,8 +1084,10 @@ struct ThemeCard: View {
     @Environment(\.theme) private var theme
     let info: ThemeInfo
     let isActive: Bool
+    let isSelected: Bool
     let onActivate: () -> Void
     let onReveal: () -> Void
+    let onSelect: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1146,9 +1157,16 @@ struct ThemeCard: View {
         .background(theme.cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(isActive ? theme.accent : theme.divider, lineWidth: isActive ? 1.5 : 0.5)
+                .strokeBorder(
+                    isActive ? theme.accent
+                              : (isSelected ? theme.accent.opacity(0.5) : theme.divider),
+                    lineWidth: isActive ? 1.5 : (isSelected ? 1.2 : 0.5)
+                )
         )
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect() }
+        .help("点击选择 — 在右侧面板编辑主题配置")
     }
 }
 

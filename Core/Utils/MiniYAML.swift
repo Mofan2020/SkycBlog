@@ -285,4 +285,94 @@ public enum MiniYAML {
         if let d = Double(t) { return d }
         return t
     }
+
+    // MARK: - Dump (用于写回 _config.yml / theme.yaml)
+    /// 将 [String: Any] 序列化为 YAML 文本 (UTF-8).
+    public static func dump(_ root: [String: Any]) -> String {
+        var lines: [String] = []
+        emitMapping(root, indent: 0, lines: &lines)
+        // 末尾保留一个换行 (Hexo/SkycBlog 风格)
+        if lines.isEmpty { return "" }
+        return lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func emitMapping(_ dict: [String: Any], indent: Int, lines: inout [String]) {
+        let pad = String(repeating: " ", count: indent)
+        for (k, v) in dict.sorted(by: { $0.key < $1.key }) {
+            let safeKey = quoteIfNeeded(k)
+            if let sub = v as? [String: Any], !sub.isEmpty {
+                lines.append("\(pad)\(safeKey):")
+                emitMapping(sub, indent: indent + 2, lines: &lines)
+            } else if let arr = v as? [Any] {
+                lines.append("\(pad)\(safeKey):")
+                emitList(arr, indent: indent + 2, lines: &lines)
+            } else {
+                lines.append("\(pad)\(safeKey): \(scalarString(v))")
+            }
+        }
+    }
+
+    private static func emitList(_ arr: [Any], indent: Int, lines: inout [String]) {
+        let pad = String(repeating: " ", count: indent)
+        for item in arr {
+            if let sub = item as? [String: Any], !sub.isEmpty {
+                // YAML 中, list of mapping 的标准写法: 首行 "- key: val", 后续行缩进
+                if let first = sub.sorted(by: { $0.key < $1.key }).first {
+                    let firstSafe = quoteIfNeeded(first.key)
+                    var rest = sub
+                    rest.removeValue(forKey: first.key)
+                    if rest.isEmpty {
+                        lines.append("\(pad)- \(firstSafe): \(scalarString(first.value))")
+                    } else {
+                        lines.append("\(pad)- \(firstSafe): \(scalarString(first.value))")
+                        emitMapping(rest, indent: indent + 4, lines: &lines)
+                    }
+                } else {
+                    lines.append("\(pad)- {}")
+                }
+            } else if let subArr = item as? [Any] {
+                lines.append("\(pad)-")
+                emitList(subArr, indent: indent + 2, lines: &lines)
+            } else {
+                lines.append("\(pad)- \(scalarString(item))")
+            }
+        }
+    }
+
+    private static func scalarString(_ v: Any) -> String {
+        if v is NSNull { return "null" }
+        if let b = v as? Bool { return b ? "true" : "false" }
+        if let i = v as? Int { return String(i) }
+        if let d = v as? Double { return String(d) }
+        if let s = v as? String {
+            // 含特殊字符 -> 强制加双引号
+            let needQuote = s.isEmpty ||
+                s.contains(":") || s.contains("#") || s.contains("\n") ||
+                s.first == " " || s.last == " " || s.first == "\"" || s.first == "'" ||
+                ["true", "false", "null", "yes", "no"].contains(s.lowercased()) ||
+                Int(s) != nil || Double(s) != nil
+            if needQuote {
+                let escaped = s.replacingOccurrences(of: "\\", with: "\\\\")
+                                .replacingOccurrences(of: "\"", with: "\\\"")
+                return "\"\(escaped)\""
+            }
+            return s
+        }
+        if let arr = v as? [Any] {
+            // inline array
+            let inner = arr.map { scalarString($0) }.joined(separator: ", ")
+            return "[\(inner)]"
+        }
+        return String(describing: v)
+    }
+
+    private static func quoteIfNeeded(_ s: String) -> String {
+        if s.isEmpty { return "\"\"" }
+        if s.range(of: "^[A-Za-z_][A-Za-z0-9_\\-]*$", options: .regularExpression) != nil {
+            return s
+        }
+        let escaped = s.replacingOccurrences(of: "\\", with: "\\\\")
+                        .replacingOccurrences(of: "\"", with: "\\\"")
+        return "\"\(escaped)\""
+    }
 }

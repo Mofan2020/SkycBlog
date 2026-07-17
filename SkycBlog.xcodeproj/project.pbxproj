@@ -23,6 +23,7 @@
 		46134DCE11FD64E758FE4CEC /* Outputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6236FC29D7EB717DE5F6A7ED /* Outputs.swift */; };
 		4FCB06A4F14B484143B38311 /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		53A04E177314C66633C00F45 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 633CBB3977C50330BEA92CF2 /* AppState.swift */; };
+		T1E2M3C4O5N6F7I8G9H0A1B2 /* ThemeConfigEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = U1V2W3X4Y5Z6A7B8C9D0E1F2 /* ThemeConfigEditor.swift */; };
 		61E51C8ED4D1DD6ABFC0C8E5 /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD8FAA4736220CC67F75537 /* PluginManager.swift */; };
 		62496C7C15B9FF2FC8E89975 /* EXIFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */; };
 		7094B4469DD40845F6EA339D /* PugEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C9062C1D2ED17471372A2B /* PugEngine.swift */; };
@@ -125,6 +126,7 @@
 		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkycBlogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		912FF5541A843C1E9095E49E /* BuildCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildCommand.swift; sourceTree = "<group>"; };
 		93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkycBlogApp.swift; sourceTree = "<group>"; };
+		U1V2W3X4Y5Z6A7B8C9D0E1F2 /* ThemeConfigEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeConfigEditor.swift; sourceTree = "<group>"; };
 		9CE6FD798C84E3894DD8E84D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9E24840EBECA4D0A8644485D /* LocalServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalServer.swift; sourceTree = "<group>"; };
 		9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */,
 				09A787A4AD0DA235562E1A08 /* Theme.swift */,
 				C731EF0EC4EE82632F4E615A /* WebPreview.swift */,
+				U1V2W3X4Y5Z6A7B8C9D0E1F2 /* ThemeConfigEditor.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -501,6 +504,7 @@
 				1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */,
 				CCBB5E41C10DF27EA4640669 /* Theme.swift in Sources */,
 				EE93F9A5D72982E7555E0C99 /* WebPreview.swift in Sources */,
+				T1E2M3C4O5N6F7I8G9H0A1B2 /* ThemeConfigEditor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

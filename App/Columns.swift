@@ -56,6 +56,7 @@ struct SidebarView: View {
             ForEach(items) { section in
                 SidebarRow(section: section, isSelected: appState.selection == section) {
                     appState.selection = section
+                    if section != .themes { appState.clearThemeSelection() }
                 }
             }
         }
