@@ -278,10 +278,14 @@ public enum ThemeManager {
         public let format: String
         /// 配置文件磁盘上的完整路径
         public let absolutePath: String
-        /// 解析后的键值树（Any = String/Int/Double/Bool/[Any]/[String:Any]/NSNull）
-        public var dict: [String: Any]
-        /// 原始文件全文（用于高级模式）
+        /// 保留顺序 + 注释的配置树 (YAML 用 CmpMapping; TOML 在加载时构造一个等价的 CmpMapping
+        /// —— 但没有精确注释保留, 仍是注释丢失的"兼容版").
+        /// 始终非空: 加载失败时为空 CmpMapping.
+        public var cmap: CmpMapping
+        /// 原始文件全文（用于高级模式, 始终代表最近一次 save 或加载时的内容）
         public var rawText: String
+        /// 便利: 旧 API 需要的扁平 dict (不带顺序/注释)
+        public var dict: [String: Any] { cmap.toDict() }
     }
 
     /// 定位一个主题的配置文件. Hexo → themes/<name>/_config.yml (YAML),
@@ -319,15 +323,21 @@ public enum ThemeManager {
             let abs = (themeDir as NSString).appendingPathComponent(rel)
             if fm.fileExists(atPath: abs) {
                 let text = (try? String(contentsOfFile: abs, encoding: .utf8)) ?? ""
-                let dict: [String: Any]
+                let cmap: CmpMapping
                 switch fmt {
-                case "yaml": dict = MiniYAML.load(text)
-                case "toml": dict = TOMLParser.parse(text)
-                default: dict = [:]
+                case "yaml":
+                    // 使用保顺序 + 注释的解析
+                    cmap = MiniYAML.loadAnnotated(text)
+                case "toml":
+                    // TOML 暂无注释保留; 退回到 [String:Any] 再转 CmpMapping
+                    let flat = TOMLParser.parse(text)
+                    cmap = CmpMapping.from(flat)
+                default:
+                    cmap = CmpMapping()
                 }
                 return ThemeConfigFile(themeName: themeName, themeKind: kind,
                                        relativePath: rel, format: fmt,
-                                       absolutePath: abs, dict: dict, rawText: text)
+                                       absolutePath: abs, cmap: cmap, rawText: text)
             }
         }
 
@@ -336,12 +346,14 @@ public enum ThemeManager {
         let abs = (themeDir as NSString).appendingPathComponent(rel)
         return ThemeConfigFile(themeName: themeName, themeKind: kind,
                                relativePath: rel, format: fmt,
-                               absolutePath: abs, dict: [:], rawText: "")
+                               absolutePath: abs, cmap: CmpMapping(), rawText: "")
     }
 
-    /// 保存主题配置: 把 dict 重新序列化为对应格式并写盘.
+    /// 保存主题配置.
     /// - Parameter rawOverride: 若非 nil, 直接以该字符串覆盖整个文件 (高级模式).
-    public static func saveThemeConfig(_ cfg: ThemeConfigFile, dict: [String: Any]? = nil, rawOverride: String? = nil) -> (ok: Bool, message: String) {
+    /// - Parameter cmap: 若非 nil, 优先用 CmpMapping 保存 (YAML 时会保留注释).
+    /// - Parameter dict: 兜底, 兼容旧 API (YAML 不保留注释, TOML 直接 dump).
+    public static func saveThemeConfig(_ cfg: ThemeConfigFile, cmap: CmpMapping? = nil, dict: [String: Any]? = nil, rawOverride: String? = nil) -> (ok: Bool, message: String) {
         let fm = FileManager.default
         let dir = (cfg.absolutePath as NSString).deletingLastPathComponent
         do {
@@ -349,6 +361,12 @@ public enum ThemeManager {
             let text: String
             if let raw = rawOverride {
                 text = raw
+            } else if let m = cmap {
+                switch cfg.format {
+                case "yaml": text = MiniYAML.dump(m)
+                case "toml": text = MiniTOML.dump(m.toDict())
+                default:     text = MiniYAML.dump(m)
+                }
             } else {
                 let d = dict ?? cfg.dict
                 switch cfg.format {

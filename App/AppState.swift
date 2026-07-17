@@ -402,13 +402,13 @@ final class AppState: ObservableObject {
         return ThemeManager.locateThemeConfig(themeName: name, projectRoot: project.root.path)
     }
 
-    /// 保存主题配置. dict 或 rawOverride 至少传一个.
-    func saveThemeConfig(name: String, dict: [String: Any]? = nil, rawOverride: String? = nil) -> (ok: Bool, message: String) {
+    /// 保存主题配置. cmap / dict / rawOverride 至少传一个. 优先用 cmap (保留注释).
+    func saveThemeConfig(name: String, cmap: CmpMapping? = nil, dict: [String: Any]? = nil, rawOverride: String? = nil) -> (ok: Bool, message: String) {
         guard let project = project else { return (false, "未打开项目") }
         guard let cfg = ThemeManager.locateThemeConfig(themeName: name, projectRoot: project.root.path) else {
             return (false, "主题目录不存在: \(name)")
         }
-        let result = ThemeManager.saveThemeConfig(cfg, dict: dict, rawOverride: rawOverride)
+        let result = ThemeManager.saveThemeConfig(cfg, cmap: cmap, dict: dict, rawOverride: rawOverride)
         if result.ok {
             log(.success("已保存主题 \(name) 的配置: \(cfg.relativePath)"))
         } else {

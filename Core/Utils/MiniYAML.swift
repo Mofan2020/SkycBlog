@@ -375,4 +375,328 @@ public enum MiniYAML {
                         .replacingOccurrences(of: "\"", with: "\\\"")
         return "\"\(escaped)\""
     }
+
+    // MARK: - 保留注释的注解式解析与序列化 (用于主题配置编辑器)
+
+    /// 解析 YAML, 保留 key 顺序、leading/inline 注释. 返回 CmpMapping.
+    public static func loadAnnotated(_ text: String) -> CmpMapping {
+        let metas = _buildAnnotatedMetas(text)
+        var m = CmpMapping()
+        var i = 0
+        _annotatedWalkMapping(metas: metas, i: &i, indent: 0, into: &m)
+        return m
+    }
+
+    /// 序列化 CmpMapping -> YAML 文本 (含注释, 按 entries 顺序)
+    public static func dump(_ mapping: CmpMapping) -> String {
+        var lines: [String] = []
+        emitAnnotatedMapping(mapping, indent: 0, lines: &lines)
+        return lines.isEmpty ? "" : lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func emitAnnotatedMapping(_ m: CmpMapping, indent: Int, lines: inout [String]) {
+        let pad = String(repeating: " ", count: indent)
+        for lc in m.leadingComments {
+            lines.append(pad + lc)
+        }
+        for e in m.entries {
+            for lc in e.leadingComments {
+                lines.append(pad + lc)
+            }
+            emitAnnotatedEntry(e, indent: indent, lines: &lines)
+        }
+    }
+
+    private static func emitAnnotatedEntry(_ e: CmpEntry, indent: Int, lines: inout [String]) {
+        let pad = String(repeating: " ", count: indent)
+        let safeKey = quoteIfNeeded(e.key)
+        switch e.value {
+        case .scalar(let s):
+            var line = "\(pad)\(safeKey): \(scalarString(s))"
+            if let ic = e.inlineComment { line += "  # \(ic)" }
+            lines.append(line)
+        case .mapping(let m):
+            lines.append("\(pad)\(safeKey):")
+            emitAnnotatedMapping(m, indent: indent + 2, lines: &lines)
+        case .list(let items):
+            emitAnnotatedList(items, key: e.key, indent: indent, lines: &lines, inlineComment: e.inlineComment)
+        }
+    }
+
+    private static func emitAnnotatedList(_ items: [CmpListItem], key: String, indent: Int, lines: inout [String], inlineComment: String?) {
+        let pad = String(repeating: " ", count: indent)
+        let safeKey = quoteIfNeeded(key)
+        if items.isEmpty {
+            var line = "\(pad)\(safeKey): []"
+            if let ic = inlineComment { line += "  # \(ic)" }
+            lines.append(line)
+            return
+        }
+        lines.append("\(pad)\(safeKey):")
+        for item in items {
+            emitListItemLine(item, indent: indent + 2, lines: &lines)
+        }
+        if let ic = inlineComment {
+            lines.append(pad + "# " + ic)
+        }
+    }
+
+    private static func emitListItemLine(_ item: CmpListItem, indent: Int, lines: inout [String]) {
+        let pad = String(repeating: " ", count: indent)
+        for lc in item.leadingComments {
+            lines.append(pad + lc)
+        }
+        switch item.value {
+        case .scalar(let s):
+            var line = "\(pad)- \(scalarString(s))"
+            if let ic = item.inlineComment { line += "  # \(ic)" }
+            lines.append(line)
+        case .mapping(let m):
+            if let first = m.entries.first {
+                let safeKey = quoteIfNeeded(first.key)
+                let firstVal = annotatedScalarString(first.value)
+                if m.entries.count == 1 {
+                    var line = "\(pad)- \(safeKey): \(firstVal)"
+                    if let ic = first.inlineComment { line += "  # \(ic)" }
+                    lines.append(line)
+                } else {
+                    lines.append("\(pad)- \(safeKey): \(firstVal)")
+                    for e in m.entries.dropFirst() {
+                        for lc in e.leadingComments { lines.append(pad + "  " + lc) }
+                        emitAnnotatedEntry(e, indent: indent + 2, lines: &lines)
+                    }
+                }
+            } else {
+                lines.append("\(pad)- {}")
+            }
+        case .list(let inner):
+            lines.append("\(pad)-")
+            for it in inner { emitListItemLine(it, indent: indent + 2, lines: &lines) }
+        }
+    }
+
+    private static func annotatedScalarString(_ v: CmpValue) -> String {
+        switch v {
+        case .scalar(let s): return scalarString(s)
+        case .mapping(let m): return "{ \(inlineMapping(m)) }"
+        case .list(let items): return "[\(items.map { inlineListItem($0) }.joined(separator: ", "))]"
+        }
+    }
+    private static func inlineMapping(_ m: CmpMapping) -> String {
+        m.entries.map { "\(quoteIfNeeded($0.key)): \(annotatedScalarString($0.value))" }.joined(separator: ", ")
+    }
+    private static func inlineListItem(_ item: CmpListItem) -> String {
+        annotatedScalarString(item.value)
+    }
+}
+
+// MARK: - line meta + walker (保留顺序 + 注释)
+struct MiniYAMLAnnotatedLine {
+    let raw: String          // 去掉注释尾后的行 (含缩进)
+    let indent: Int
+    let leading: [String]    // 上一段"空/注释"行中属于本行的注释
+    let inline: String?
+    let isPure: Bool         // 整行是空行或纯注释
+}
+
+extension MiniYAML {
+    fileprivate static func _buildAnnotatedMetas(_ text: String) -> [MiniYAMLAnnotatedLine] {
+        let rawLines = text.components(separatedBy: "\n")
+        var metas: [MiniYAMLAnnotatedLine] = []
+        var pendingComments: [String] = []
+        for line in rawLines {
+            let leading = _countLeadingSpaces(line)
+            let (withoutComment, inline) = _extractInlineComment(line)
+            let trimmed = withoutComment.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty {
+                metas.append(MiniYAMLAnnotatedLine(raw: "", indent: leading, leading: [], inline: nil, isPure: true))
+                continue
+            }
+            if trimmed.hasPrefix("#") {
+                // 纯注释行: 整行保留 (trim 掉前导缩进, 形如 "# xxx")
+                let commentText = line.trimmingCharacters(in: .init(charactersIn: " \t"))
+                pendingComments.append(commentText)
+                metas.append(MiniYAMLAnnotatedLine(raw: commentText, indent: leading, leading: [], inline: nil, isPure: true))
+                continue
+            }
+            metas.append(MiniYAMLAnnotatedLine(raw: withoutComment, indent: leading, leading: pendingComments, inline: inline, isPure: false))
+            pendingComments = []
+        }
+        return metas
+    }
+
+    fileprivate static func _countLeadingSpaces(_ s: String) -> Int {
+        var c = 0
+        for ch in s {
+            if ch == " " { c += 1 } else { break }
+        }
+        return c
+    }
+
+    fileprivate static func _extractInlineComment(_ s: String) -> (String, String?) {
+        var inStr: Character? = nil
+        var bodyEnd = s.endIndex
+        for i in s.indices {
+            let ch = s[i]
+            if let q = inStr {
+                if ch == q { inStr = nil }
+                continue
+            }
+            if ch == "\"" || ch == "'" {
+                inStr = ch
+                continue
+            }
+            if ch == "#" {
+                bodyEnd = i
+                break
+            }
+        }
+        let body = String(s[..<bodyEnd])
+        var start = bodyEnd
+        if start < s.endIndex, s[start] == "#" { start = s.index(after: start) }
+        while start < s.endIndex, s[start] == " " || s[start] == "\t" { start = s.index(after: start) }
+        let comment = start < s.endIndex ? String(s[start...]).trimmingCharacters(in: .init(charactersIn: " \t\r")) : ""
+        return (body, comment.isEmpty ? nil : comment)
+    }
+
+    fileprivate static func _annotatedParseScalar(_ s: String) -> Any { parseScalar(s) }
+    fileprivate static func _annotatedParseFlowMapping(_ s: String) -> [String: Any] { parseFlowMapping(s) }
+    fileprivate static func _annotatedSplitKV(_ s: String) -> (String, String) { splitKV(s) }
+}
+
+fileprivate func _annotatedWalkMapping(metas: [MiniYAMLAnnotatedLine], i: inout Int, indent: Int, into m: inout CmpMapping) {
+    while i < metas.count {
+        let l = metas[i]
+        if l.isPure {
+            if !l.raw.isEmpty {
+                if m.entries.isEmpty {
+                    m.leadingComments.append(l.raw)
+                } else {
+                    m.entries[m.entries.count - 1].leadingComments.append(l.raw)
+                }
+            }
+            i += 1
+            continue
+        }
+        if l.indent < indent { return }
+        if l.indent > indent { i += 1; continue }
+        let content = String(l.raw.dropFirst(l.indent))
+        if content.hasPrefix("- ") { return }
+        guard let colon = content.firstIndex(of: ":") else { i += 1; continue }
+        let key = String(content[..<colon]).trimmingCharacters(in: .whitespaces)
+        let valuePart = content[content.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+        var entry = CmpEntry(key: key, value: .scalar(NSNull()), leadingComments: l.leading, inlineComment: l.inline)
+        if valuePart.isEmpty {
+            if i + 1 < metas.count {
+                let next = metas[i + 1]
+                if next.indent > indent {
+                    if next.isPure { i += 1; continue }
+                    let nextContent = String(next.raw.dropFirst(next.indent))
+                    if nextContent.hasPrefix("- ") {
+                        var items: [CmpListItem] = []
+                        _annotatedWalkList(metas: metas, i: &i, indent: next.indent, into: &items)
+                        entry.value = .list(items)
+                    } else {
+                        var sub = CmpMapping()
+                        _annotatedWalkMapping(metas: metas, i: &i, indent: next.indent, into: &sub)
+                        entry.value = .mapping(sub)
+                    }
+                    m.entries.append(entry)
+                    continue
+                }
+            }
+            m.entries.append(entry)
+            i += 1
+        } else {
+            entry.value = .scalar(MiniYAML._annotatedParseScalar(valuePart))
+            m.entries.append(entry)
+            i += 1
+        }
+    }
+}
+
+fileprivate func _annotatedWalkList(metas: [MiniYAMLAnnotatedLine], i: inout Int, indent: Int, into items: inout [CmpListItem]) {
+    while i < metas.count {
+        let l = metas[i]
+        if l.isPure {
+            if !l.raw.isEmpty {
+                if items.isEmpty { /* skip - 无归属 */ } else {
+                    items[items.count - 1].leadingComments.append(l.raw)
+                }
+            }
+            i += 1
+            continue
+        }
+        if l.indent < indent { return }
+        if l.indent > indent { i += 1; continue }
+        let content = String(l.raw.dropFirst(l.indent))
+        if !content.hasPrefix("- ") { return }
+        let rest = String(content.dropFirst(2))
+        var item = CmpListItem(value: .scalar(NSNull()), leadingComments: l.leading, inlineComment: l.inline)
+        if rest.isEmpty {
+            if i + 1 < metas.count {
+                let next = metas[i + 1]
+                if next.indent > indent {
+                    if next.isPure { i += 1; continue }
+                    let nextContent = String(next.raw.dropFirst(next.indent))
+                    if nextContent.hasPrefix("- ") {
+                        var sub: [CmpListItem] = []
+                        _annotatedWalkList(metas: metas, i: &i, indent: next.indent, into: &sub)
+                        item.value = .list(sub)
+                    } else {
+                        var sub = CmpMapping()
+                        _annotatedWalkMapping(metas: metas, i: &i, indent: next.indent, into: &sub)
+                        item.value = .mapping(sub)
+                    }
+                    items.append(item)
+                    continue
+                }
+            }
+            item.value = .scalar("")
+            items.append(item)
+            i += 1
+        } else if rest.hasPrefix("{") && rest.hasSuffix("}") && rest.count >= 2 {
+            let d = MiniYAML._annotatedParseFlowMapping(rest)
+            item.value = .mapping(CmpMapping.from(d))
+            items.append(item)
+            i += 1
+        } else if rest.contains(":") && !rest.hasPrefix("\"") && !rest.hasPrefix("'") {
+            let (k, v) = MiniYAML._annotatedSplitKV(rest)
+            var sub = CmpMapping()
+            sub.entries.append(CmpEntry(key: k, value: .scalar(MiniYAML._annotatedParseScalar(v))))
+            var j = i + 1
+            while j < metas.count {
+                let l2 = metas[j]
+                if l2.isPure {
+                    if !l2.raw.isEmpty {
+                        if let lastIdx = sub.entries.indices.last {
+                            sub.entries[lastIdx].leadingComments.append(l2.raw)
+                        }
+                    }
+                    j += 1
+                    continue
+                }
+                if l2.indent > indent {
+                    let c2 = String(l2.raw.dropFirst(l2.indent))
+                    if let c = c2.firstIndex(of: ":") {
+                        let k2 = String(c2[..<c]).trimmingCharacters(in: .whitespaces)
+                        let v2 = c2[c2.index(after: c)...].trimmingCharacters(in: .whitespaces)
+                        sub.entries.append(CmpEntry(key: k2, value: .scalar(MiniYAML._annotatedParseScalar(v2)), leadingComments: l2.leading, inlineComment: l2.inline))
+                        j += 1
+                        continue
+                    }
+                    j += 1
+                    continue
+                }
+                break
+            }
+            item.value = .mapping(sub)
+            items.append(item)
+            i = j
+        } else {
+            item.value = .scalar(MiniYAML._annotatedParseScalar(rest))
+            items.append(item)
+            i += 1
+        }
+    }
 }
