@@ -3,8 +3,8 @@ import Foundation
 /// 主题种类
 public enum ThemeKind: String, Codable, CaseIterable {
     case skyc   // SkycBlog 原生主题
-    case hexo   // Hexo 主题（识别但构建不参与 EJS 解析）
-    case hugo   // Hugo 主题（识别但构建不参与 Go template 解析）
+    case hexo   // Hexo 主题（EJS/Swig/Pug 由 HexoThemeAdapter 接管构建）
+    case hugo   // Hugo 主题（Go template 由 HugoThemeAdapter 接管构建）
     case unknown
 
     public var displayName: String {
@@ -25,8 +25,25 @@ public enum ThemeKind: String, Codable, CaseIterable {
         }
     }
 
+    /// 是否在 SkycBlog 构建流程中真正参与构建。
+    /// 现在 hexo/hugo 都已被对应 Adapter 完整接管, 不再是"识别但不参与"。
     public var supportsBuild: Bool {
-        self == .skyc
+        switch self {
+        case .skyc, .hexo, .hugo:
+            return true
+        case .unknown:
+            return false
+        }
+    }
+
+    /// 简短的副标题 (UI 上用作"已支持 X"提示)
+    public var buildCapability: String {
+        switch self {
+        case .skyc:  return "SkycBlog 原生模板"
+        case .hexo:  return "EJS / Swig / Pug"
+        case .hugo:  return "Go template"
+        case .unknown: return "未识别"
+        }
     }
 }
 
@@ -125,20 +142,21 @@ public enum ThemeManager {
         let hexoSource = (root as NSString).appendingPathComponent("source")
         let hexoEJS = (root as NSString).appendingPathComponent("layout/index.ejs")
         let hexoSwig = (root as NSString).appendingPathComponent("layout/index.swig")
+        let hexoPug = (root as NSString).appendingPathComponent("layout/index.pug")
 
         let hugoCfg = (root as NSString).appendingPathComponent("theme.toml")
         let hugoCfg2 = (root as NSString).appendingPathComponent("hugo.toml")
         let hugoLayouts = (root as NSString).appendingPathComponent("layouts")
         let hugoStatic = (root as NSString).appendingPathComponent("static")
 
-        // 扫描 layout/ 里是否有 EJS / SWIG 模板
+        // 扫描 layout/ 里是否有 EJS / SWIG / Pug 模板
         func hasHexoTemplates() -> Bool {
-            if fm.fileExists(atPath: hexoEJS) || fm.fileExists(atPath: hexoSwig) { return true }
-            // 扫描 layout/ 找任意 .ejs / .swig
+            if fm.fileExists(atPath: hexoEJS) || fm.fileExists(atPath: hexoSwig) || fm.fileExists(atPath: hexoPug) { return true }
+            // 扫描 layout/ 找任意 .ejs / .swig / .pug
             guard let items = try? fm.contentsOfDirectory(atPath: hexoLayout) else { return false }
             for it in items {
                 let low = (it as NSString).pathExtension.lowercased()
-                if low == "ejs" || low == "swig" { return true }
+                if low == "ejs" || low == "swig" || low == "pug" { return true }
                 var isDir: ObjCBool = false
                 let p = (hexoLayout as NSString).appendingPathComponent(it)
                 fm.fileExists(atPath: p, isDirectory: &isDir)
@@ -146,7 +164,7 @@ public enum ThemeManager {
                     if let sub = try? fm.contentsOfDirectory(atPath: p) {
                         for s in sub {
                             let l2 = (s as NSString).pathExtension.lowercased()
-                            if l2 == "ejs" || l2 == "swig" { return true }
+                            if l2 == "ejs" || l2 == "swig" || l2 == "pug" { return true }
                         }
                     }
                 }

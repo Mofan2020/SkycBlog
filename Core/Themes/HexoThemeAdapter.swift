@@ -18,10 +18,37 @@ public final class HexoThemeAdapter {
     public func build(pages: [Page], tags: [String: [Page]], categories: [String: [Page]], outDir: String, onProgress: ((String) -> Void)? = nil) -> BuildResult {
         var result = BuildResult()
         let engine = EJSEngine(themeRoot: themeRoot)
+        let pugEngine = PugEngine(themeRoot: themeRoot)
         // 注入通用 helpers, 让 url_for / full_url / trim 等 Hexo 风格函数可用
         engine.helpers["trim"] = { (args: [Any?]) -> Any in
             if let s = args.first as? String { return s.trimmingCharacters(in: .whitespacesAndNewlines) }
             return args.first ?? NSNull()
+        }
+        // 给 Pug 注入同名 helpers (Pug 通过 ctx.userContext 查函数)
+        pugEngine.helpers["trim"] = { (args: [Any?]) -> Any in
+            if let s = args.first as? String { return s.trimmingCharacters(in: .whitespacesAndNewlines) }
+            return args.first ?? NSNull()
+        }
+        pugEngine.helpers["url_for"] = { (args: [Any?]) -> Any in
+            if let s = args.first as? String { return engine.normalizeURLPublic(s) }
+            return ""
+        }
+        pugEngine.helpers["full_url"] = { (args: [Any?]) -> Any in
+            if let s = args.first as? String { return engine.normalizeURLPublic(s) }
+            return ""
+        }
+        pugEngine.helpers["render"] = { (args: [Any?]) -> Any in
+            // render(text, 'pug') - 字符串渲染
+            if let txt = args.first as? String {
+                let engineName = (args.count > 1 ? (args[1] as? String) : nil)?.lowercased() ?? "pug"
+                if engineName == "pug" {
+                    return pugEngine.renderString(txt, context: [:])
+                }
+            }
+            if let txt = args.first as? String {
+                return txt
+            }
+            return ""
         }
 
         // 1. 复制 source/ 目录资源到 output/
@@ -90,31 +117,31 @@ public final class HexoThemeAdapter {
         }
 
         onProgress?("Hexo: 渲染首页")
-        renderHome(engine: engine, site: siteContext, posts: pages.filter { $0.kind == .post }, outDir: outDir, result: &result)
+        renderHome(engine: engine, pugEngine: pugEngine, site: siteContext, posts: pages.filter { $0.kind == .post }, outDir: outDir, result: &result)
         onProgress?("Hexo: 渲染文章页")
         for post in pages where post.kind == .post {
-            renderPost(engine: engine, site: siteContext, post: post, outDir: outDir, result: &result)
+            renderPost(engine: engine, pugEngine: pugEngine, site: siteContext, post: post, outDir: outDir, result: &result)
         }
         onProgress?("Hexo: 渲染独立页")
         for page in pages where page.kind == .page {
-            renderStandalonePage(engine: engine, site: siteContext, page: page, outDir: outDir, result: &result)
+            renderStandalonePage(engine: engine, pugEngine: pugEngine, site: siteContext, page: page, outDir: outDir, result: &result)
         }
         onProgress?("Hexo: 渲染归档")
-        renderArchive(engine: engine, site: siteContext, posts: pages.filter { $0.kind == .post }, outDir: outDir, result: &result)
+        renderArchive(engine: engine, pugEngine: pugEngine, site: siteContext, posts: pages.filter { $0.kind == .post }, outDir: outDir, result: &result)
         onProgress?("Hexo: 渲染标签")
         for (tagName, list) in tags {
-            renderTag(engine: engine, site: siteContext, tagName: tagName, list: list, outDir: outDir, result: &result)
+            renderTag(engine: engine, pugEngine: pugEngine, site: siteContext, tagName: tagName, list: list, outDir: outDir, result: &result)
         }
         onProgress?("Hexo: 渲染分类")
         for (catName, list) in categories {
-            renderCategory(engine: engine, site: siteContext, catName: catName, list: list, outDir: outDir, result: &result)
+            renderCategory(engine: engine, pugEngine: pugEngine, site: siteContext, catName: catName, list: list, outDir: outDir, result: &result)
         }
         onProgress?("Hexo: 渲染相册")
         for album in pages where album.kind == .album {
-            renderAlbum(engine: engine, site: siteContext, album: album, outDir: outDir, result: &result)
+            renderAlbum(engine: engine, pugEngine: pugEngine, site: siteContext, album: album, outDir: outDir, result: &result)
         }
         onProgress?("Hexo: 渲染 404")
-        render404(engine: engine, site: siteContext, outDir: outDir, result: &result)
+        render404(engine: engine, pugEngine: pugEngine, site: siteContext, outDir: outDir, result: &result)
 
         // 3. 整体资源拷贝 (Hexo 主题可能含 source/css, source/js, source/images, source/fancybox 等)
         copyDir(from: sourceDir, to: outDir)
@@ -159,19 +186,46 @@ public final class HexoThemeAdapter {
         return nil
     }
 
+    /// 优先返回 .pug 布局, 后 .ejs/.html/.swig
+    private func findLayoutWithPug(_ name: String) -> String? {
+        let candidates = [
+            "layout/\(name).pug",
+            "layout/\(name).ejs",
+            "layout/\(name).html",
+            "layout/\(name).swig",
+            "\(name).pug",
+            "\(name).ejs",
+            "\(name).html"
+        ]
+        let r = findLayout(candidates)
+        if r == nil {
+            warnings.append("未找到布局: \(name) (尝试: \(candidates.joined(separator: ", ")))")
+        }
+        return r
+    }
+
+    /// 统一渲染入口, 按文件扩展名选 EJS / Pug
+    private func renderLayoutFile(relPath: String, context: [String: Any], ejsEngine: EJSEngine, pugEngine: PugEngine) -> String {
+        if relPath.hasSuffix(".pug") {
+            let r = pugEngine.renderFile(relPath: relPath, context: context)
+            if !pugEngine.warnings.isEmpty {
+                warnings.append("Pug 警告 (\(relPath)): " + pugEngine.warnings.joined(separator: "; "))
+            }
+            return r
+        }
+        return ejsEngine.renderFile(relPath: relPath, context: context)
+    }
+
     private func ensureDir(_ path: String) {
         try? FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
     }
 
     // MARK: - 页面渲染
 
-    private func renderHome(engine: EJSEngine, site: [String: Any], posts: [Page], outDir: String, result: inout BuildResult) {
-        guard let layout = findLayout(["layout/index.ejs", "layout/index.html", "index.ejs"]) else {
-            warnings.append("Hexo: 缺 layout/index.ejs, 跳过首页")
-            return
-        }
+    private func renderHome(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], posts: [Page], outDir: String, result: inout BuildResult) {
         let sorted = posts.sorted { $0.date > $1.date }
-        let pages = max(1, Int(ceil(Double(sorted.count) / Double(config.paginationSize))))
+        let pages = (sorted.count + config.paginationSize - 1) / max(config.paginationSize, 1)
+        if pages == 0 { return }
         for p in 0..<pages {
             let start = p * config.paginationSize
             let end = min(start + config.paginationSize, sorted.count)
@@ -181,20 +235,21 @@ public final class HexoThemeAdapter {
             ctx["posts"] = chunk.map { hexoPost($0) }
             ctx["pagination"] = ["prev": p > 0 ? "page/\(p)" : nil, "next": p < pages - 1 ? "page/\(p + 2)" : nil, "page": p + 1, "total": pages]
             ctx["__type__"] = "index"
-            let html = engine.renderFile(relPath: layout, context: ctx)
+            let layout = findLayoutWithPug("index") ?? "layout/index.ejs"
+            let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
             let outPath = p == 0 ? "index.html" : "page/\(p + 1)/index.html"
             writeOut(html: html, outPath: outPath, outDir: outDir, result: &result, type: "首页")
         }
     }
 
-    private func renderPost(engine: EJSEngine, site: [String: Any], post: Page, outDir: String, result: inout BuildResult) {
-        let layout = findLayout(["layout/post.ejs", "layout/post.html", "post.ejs"]) ?? findLayout(["layout/index.ejs"]) ?? "layout/index.ejs"
+    private func renderPost(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], post: Page, outDir: String, result: inout BuildResult) {
+        let layout = findLayoutWithPug("post") ?? findLayoutWithPug("index") ?? "layout/post.ejs"
         var ctx = site
         ctx["page"] = hexoPost(post)
         ctx["post"] = hexoPost(post)
         ctx["posts"] = [hexoPost(post)]
         ctx["__type__"] = "post"
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         // 输出到 /<year>/<month>/<day>/<slug>/index.html
         let url = post.url
         var rel = url
@@ -205,12 +260,12 @@ public final class HexoThemeAdapter {
         writeOut(html: html, outPath: rel, outDir: outDir, result: &result, type: "文章")
     }
 
-    private func renderStandalonePage(engine: EJSEngine, site: [String: Any], page: Page, outDir: String, result: inout BuildResult) {
-        let layout = findLayout(["layout/page.ejs", "layout/page.html", "page.ejs"]) ?? findLayout(["layout/post.ejs"]) ?? "layout/page.ejs"
+    private func renderStandalonePage(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], page: Page, outDir: String, result: inout BuildResult) {
+        let layout = findLayoutWithPug("page") ?? findLayoutWithPug("post") ?? "layout/page.ejs"
         var ctx = site
         ctx["page"] = hexoPage(page)
         ctx["__type__"] = "page"
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         var rel = page.url
         if rel.hasPrefix("/") { rel = String(rel.dropFirst()) }
         if !rel.hasSuffix(".html") {
@@ -219,32 +274,32 @@ public final class HexoThemeAdapter {
         writeOut(html: html, outPath: rel, outDir: outDir, result: &result, type: "页面")
     }
 
-    private func renderArchive(engine: EJSEngine, site: [String: Any], posts: [Page], outDir: String, result: inout BuildResult) {
-        guard let layout = findLayout(["layout/archive.ejs", "layout/archives.ejs", "archive.ejs"]) else { return }
+    private func renderArchive(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], posts: [Page], outDir: String, result: inout BuildResult) {
+        let layout = findLayoutWithPug("archive") ?? findLayoutWithPug("archives") ?? "layout/archive.ejs"
         let sorted = posts.sorted { $0.date > $1.date }
         var ctx = site
         ctx["page"] = makeHexoPage(posts: sorted.map { hexoPost($0) }, type: "archive")
         ctx["posts"] = sorted.map { hexoPost($0) }
         ctx["__type__"] = "archive"
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         writeOut(html: html, outPath: "archives/index.html", outDir: outDir, result: &result, type: "归档")
     }
 
-    private func renderTag(engine: EJSEngine, site: [String: Any], tagName: String, list: [Page], outDir: String, result: inout BuildResult) {
-        guard let layout = findLayout(["layout/tag.ejs", "tag.ejs"]) else { return }
+    private func renderTag(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], tagName: String, list: [Page], outDir: String, result: inout BuildResult) {
+        let layout = findLayoutWithPug("tag") ?? "layout/tag.ejs"
         let sorted = list.sorted { $0.date > $1.date }
         var ctx = site
         ctx["page"] = makeHexoPage(posts: sorted.map { hexoPost($0) }, type: "tag", tag: tagName)
         ctx["posts"] = sorted.map { hexoPost($0) }
         ctx["tag"] = ["name": tagName, "slug": Permalink.slugify(tagName)]
         ctx["__type__"] = "tag"
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         let slug = Permalink.slugify(tagName)
         writeOut(html: html, outPath: "tags/\(slug)/index.html", outDir: outDir, result: &result, type: "标签")
     }
 
-    private func renderCategory(engine: EJSEngine, site: [String: Any], catName: String, list: [Page], outDir: String, result: inout BuildResult) {
-        guard let layout = findLayout(["layout/category.ejs", "category.ejs"]) else { return }
+    private func renderCategory(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], catName: String, list: [Page], outDir: String, result: inout BuildResult) {
+        let layout = findLayoutWithPug("category") ?? "layout/category.ejs"
         let sorted = list.sorted { $0.date > $1.date }
         var ctx = site
         ctx["page"] = makeHexoPage(posts: sorted.map { hexoPost($0) }, type: "category", category: catName)
@@ -252,13 +307,13 @@ public final class HexoThemeAdapter {
         let catSlug = Permalink.slugify(catName)
         ctx["category"] = ["name": catName, "slug": catSlug]
         ctx["__type__"] = "category"
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         writeOut(html: html, outPath: "categories/\(catSlug)/index.html", outDir: outDir, result: &result, type: "分类")
     }
 
-    private func renderAlbum(engine: EJSEngine, site: [String: Any], album: Page, outDir: String, result: inout BuildResult) {
-        // 优先用 album.ejs, 回退 index.ejs
-        let layout = findLayout(["layout/album.ejs", "album.ejs"]) ?? findLayout(["layout/index.ejs"]) ?? "layout/index.ejs"
+    private func renderAlbum(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], album: Page, outDir: String, result: inout BuildResult) {
+        // 优先用 album.pug/ejs, 回退 index.pug/ejs
+        let layout = findLayoutWithPug("album") ?? findLayoutWithPug("index") ?? "layout/album.ejs"
         var ctx = site
         let albumDir = (album.sourcePath as NSString).deletingLastPathComponent
         let media = listAlbumMedia(albumDir: albumDir, albumSlug: album.slug)
@@ -267,7 +322,7 @@ public final class HexoThemeAdapter {
         ctx["page"] = albumDict
         ctx["album"] = albumDict
         ctx["media"] = media
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         writeOut(html: html, outPath: "albums/\(album.slug)/index.html", outDir: outDir, result: &result, type: "相册")
         // 拷贝媒体文件
         let dest = (outDir as NSString).appendingPathComponent("albums/\(album.slug)")
@@ -282,12 +337,12 @@ public final class HexoThemeAdapter {
         }
     }
 
-    private func render404(engine: EJSEngine, site: [String: Any], outDir: String, result: inout BuildResult) {
-        let layout = findLayout(["layout/404.ejs", "404.ejs", "layout/index.ejs"])
+    private func render404(engine: EJSEngine, pugEngine: PugEngine, site: [String: Any], outDir: String, result: inout BuildResult) {
+        let layout = findLayoutWithPug("404") ?? findLayoutWithPug("index")
         guard let layout = layout else { return }
         var ctx = site
         ctx["page"] = makeHexoPage(type: "404")
-        let html = engine.renderFile(relPath: layout, context: ctx)
+        let html = renderLayoutFile(relPath: layout, context: ctx, ejsEngine: engine, pugEngine: pugEngine)
         writeOut(html: html, outPath: "404.html", outDir: outDir, result: &result, type: "404")
     }
 

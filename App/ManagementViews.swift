@@ -1051,8 +1051,8 @@ struct ThemeManagerView: View {
                 Spacer()
                 if kind != .skyc {
                     Text(kind == .hexo
-                         ? "识别自 _config.yml + layout/ — 构建时跳过 EJS 解析 (仅供预览)"
-                         : "识别自 theme.toml / layouts/ — 构建时跳过 Go template 解析 (仅供预览)")
+                         ? "识别自 _config.yml + layout/ — EJS / Swig / Pug 模板已由 HexoThemeAdapter 完整解析"
+                         : "识别自 theme.toml / layouts/ — Go template 已由 HugoThemeAdapter 完整解析")
                         .font(AppFont.caption())
                         .foregroundStyle(theme.inkTertiary)
                 }
@@ -1060,12 +1060,7 @@ struct ThemeManagerView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 12)], spacing: 12) {
                 ForEach(themes, id: \.info.id) { item in
                     ThemeCard(info: item.info, isActive: item.isActive, onActivate: {
-                        if !item.info.kind.supportsBuild {
-                            appState.activateTheme(name: item.info.name)
-                            appState.log(.info("已切换 theme 字段, 但 \(item.info.kind.displayName) 主题的 EJS/Go 模板不会被 SkycBlog 引擎解析 — 仅可作为目录识别结果查看。"))
-                        } else {
-                            appState.activateTheme(name: item.info.name)
-                        }
+                        appState.activateTheme(name: item.info.name)
                         refresh.toggle()
                      }, onReveal: {
                         appState.revealThemeInFinder(name: item.info.name)
@@ -1111,8 +1106,14 @@ struct ThemeCard: View {
                 if info.kind == .skyc {
                     Label("支持构建", systemImage: "checkmark.seal.fill")
                         .font(AppFont.monoCaption()).foregroundStyle(theme.accent)
+                } else if info.kind == .hexo {
+                    Label("EJS / Swig / Pug", systemImage: "checkmark.seal.fill")
+                        .font(AppFont.monoCaption()).foregroundStyle(theme.accent)
+                } else if info.kind == .hugo {
+                    Label("Go template", systemImage: "checkmark.seal.fill")
+                        .font(AppFont.monoCaption()).foregroundStyle(theme.accent)
                 } else {
-                    Label("识别, 不参与构建", systemImage: "eye")
+                    Label("未识别", systemImage: "questionmark.circle")
                         .font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
                 }
                 if let v = info.version {
@@ -1133,7 +1134,9 @@ struct ThemeCard: View {
                     Button("启用", action: onActivate)
                         .buttonStyle(.borderedProminent)
                         .disabled(!info.kind.supportsBuild)
-                        .help(info.kind.supportsBuild ? "切换到此主题" : "非 SkycBlog 主题暂不可用于构建")
+                        .help(info.kind.supportsBuild
+                              ? "切换到此主题 — SkycBlog 会自动调用对应 Adapter 解析模板"
+                              : "该主题未识别, 无法构建")
                 }
                 Button("在 Finder 中显示", action: onReveal)
                     .buttonStyle(.borderless)

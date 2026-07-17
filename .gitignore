@@ -1,6 +1,6 @@
 # ===== 构建产物 =====
-./build
-./output
+build/
+output/
 
 # ===== Xcode 用户态/中间产物 =====
 *.xcuserstate

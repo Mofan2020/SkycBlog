@@ -11,6 +11,7 @@
 		0C4CDCC63B95F9C91FFBCFBA /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0C6901E420E09676902863F9 /* BuildCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912FF5541A843C1E9095E49E /* BuildCommand.swift */; };
 		0E00399371C9BF6385845D81 /* MiniYAML.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2987CEF6CD797203F607966 /* MiniYAML.swift */; };
+		0E4BDF8E9171A5429D19A79C /* PugNodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80D4345D064034A1F699618 /* PugNodes.swift */; };
 		1566265A59509BC12D89B8B2 /* EJSEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C969A352EFB1ACDF67ADCD6 /* EJSEngine.swift */; };
 		1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */; };
 		21C3A4624983E1D6E877A9DB /* BlogCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6968851F277A935794EE6AE6 /* BlogCLI.swift */; };
@@ -24,7 +25,9 @@
 		53A04E177314C66633C00F45 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 633CBB3977C50330BEA92CF2 /* AppState.swift */; };
 		61E51C8ED4D1DD6ABFC0C8E5 /* PluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD8FAA4736220CC67F75537 /* PluginManager.swift */; };
 		62496C7C15B9FF2FC8E89975 /* EXIFReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */; };
+		7094B4469DD40845F6EA339D /* PugEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C9062C1D2ED17471372A2B /* PugEngine.swift */; };
 		7B265BC744F982B5E19DF5F4 /* MarkdownRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE38DAEC28EFBC41EDBF713 /* MarkdownRenderer.swift */; };
+		83F0F53841053E4D62394218 /* PugParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B31035250B2A3279504AAD0 /* PugParser.swift */; };
 		8BDDC683CACCEEE62F64D5BD /* NewCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4328AEE98C4559270C427997 /* NewCommand.swift */; };
 		98AB40B1CD821C2BFAFB96C0 /* SkycBlogCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; };
 		9ACEAE0E8A258CBBCA84A80D /* LocalServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E24840EBECA4D0A8644485D /* LocalServer.swift */; };
@@ -118,6 +121,7 @@
 		6968851F277A935794EE6AE6 /* BlogCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogCLI.swift; sourceTree = "<group>"; };
 		69B22B06EA05740FC27028E2 /* BlogProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogProject.swift; sourceTree = "<group>"; };
 		88CCD3A16D73C7F158AA16F5 /* Deploy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deploy.swift; sourceTree = "<group>"; };
+		8B31035250B2A3279504AAD0 /* PugParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PugParser.swift; sourceTree = "<group>"; };
 		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkycBlogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		912FF5541A843C1E9095E49E /* BuildCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildCommand.swift; sourceTree = "<group>"; };
 		93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkycBlogApp.swift; sourceTree = "<group>"; };
@@ -127,7 +131,9 @@
 		A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedTheme.swift; sourceTree = "<group>"; };
 		A33AA6CE9B5D52FEE1CCF3F2 /* InitCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitCommand.swift; sourceTree = "<group>"; };
 		A8178C98D419BFA4E550FD2F /* SkycBlog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SkycBlog.entitlements; sourceTree = "<group>"; };
+		A9C9062C1D2ED17471372A2B /* PugEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PugEngine.swift; sourceTree = "<group>"; };
 		B2987CEF6CD797203F607966 /* MiniYAML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniYAML.swift; sourceTree = "<group>"; };
+		B80D4345D064034A1F699618 /* PugNodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PugNodes.swift; sourceTree = "<group>"; };
 		BBA3F68D5091A2CDE2A82CCB /* KeychainCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainCommand.swift; sourceTree = "<group>"; };
 		BE01276EECCD1321F078C006 /* HexoThemeAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexoThemeAdapter.swift; sourceTree = "<group>"; };
 		C212393995203A0D2C203C7D /* ContentLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
@@ -206,6 +212,9 @@
 			isa = PBXGroup;
 			children = (
 				0C969A352EFB1ACDF67ADCD6 /* EJSEngine.swift */,
+				A9C9062C1D2ED17471372A2B /* PugEngine.swift */,
+				B80D4345D064034A1F699618 /* PugNodes.swift */,
+				8B31035250B2A3279504AAD0 /* PugParser.swift */,
 				E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */,
 			);
 			path = Templates;
@@ -453,6 +462,9 @@
 				61E51C8ED4D1DD6ABFC0C8E5 /* PluginManager.swift in Sources */,
 				BDFE980967CBD79768AABC07 /* PostManager.swift in Sources */,
 				B78250015F009733A0D95560 /* ProjectScaffold.swift in Sources */,
+				7094B4469DD40845F6EA339D /* PugEngine.swift in Sources */,
+				0E4BDF8E9171A5429D19A79C /* PugNodes.swift in Sources */,
+				83F0F53841053E4D62394218 /* PugParser.swift in Sources */,
 				31373037844FE1A8D4CFE5FA /* SiteConfig.swift in Sources */,
 				DE31CFD64A9B103181915E8D /* TemplateEngine.swift in Sources */,
 				D323321BC4AECAE5072C9D61 /* ThemeManager.swift in Sources */,

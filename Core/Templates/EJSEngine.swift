@@ -1739,6 +1739,8 @@ public final class EJSEngine {
         }
     }
 
+    public func normalizeURLPublic(_ s: String) -> String { normalizeURL(s) }
+    public func renderPlainText(_ s: String) -> String { s }
     private func normalizeURL(_ s: String) -> String {
         if s.hasPrefix("http") || s.hasPrefix("/") { return s }
         return "/" + s
