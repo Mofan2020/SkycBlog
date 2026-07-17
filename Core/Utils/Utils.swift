@@ -154,9 +154,12 @@ public struct FrontMatter {
             if let d = f.date(from: s) { return d }
             let f2 = ISO8601DateFormatter()
             if let d = f2.date(from: s) { return d }
+            // Hexo 风格: "yyyy-MM-dd HH:mm:ss" 视为站点本地时区
             let df = DateFormatter()
             df.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            df.timeZone = TimeZone(secondsFromGMT: 0)
+            df.timeZone = TimeZone.current
+            if let d = df.date(from: s) { return d }
+            df.dateFormat = "yyyy-MM-dd HH:mm"
             if let d = df.date(from: s) { return d }
             df.dateFormat = "yyyy-MM-dd"
             if let d = df.date(from: s) { return d }

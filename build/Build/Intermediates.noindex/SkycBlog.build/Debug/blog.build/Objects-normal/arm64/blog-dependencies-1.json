@@ -122,6 +122,13 @@
     "moduleName" : "CFNetwork"
   },
   {
+    "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/CommonCrypto\/module.modulemap",
+    "clangModulePath" : "\/Users\/mofan\/Documents\/MyProjects\/SkycBlog\/build\/ModuleCache.noindex\/CommonCrypto-8GU44KB2CIPYWS1EB8WVHIDJA.pcm",
+    "isBridgingHeaderDependency" : false,
+    "isFramework" : false,
+    "moduleName" : "CommonCrypto"
+  },
+  {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/System\/Library\/Frameworks\/CoreFoundation.framework\/Modules\/module.modulemap",
     "clangModulePath" : "\/Users\/mofan\/Documents\/MyProjects\/SkycBlog\/build\/ModuleCache.noindex\/CoreFoundation-34KCRZ7YBF9Y2SHFODUIM8T98.pcm",
     "isBridgingHeaderDependency" : false,

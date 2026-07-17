@@ -119,6 +119,7 @@ extension AppState {
         case .categories: return p.allCategories.count
         case .assets: return nil
         case .plugins: return listPlugins().count
+        case .themes: return listThemes().count
         case .settings: return nil
         }
     }
@@ -139,6 +140,7 @@ struct MiddleColumnView: View {
         case .categories: CategoryManagerView()
         case .assets:    AssetsList()
         case .plugins:   PluginListView()
+        case .themes:    ThemeManagerView()
         case .settings:  ProjectSettingsView()
         }
     }
@@ -292,35 +294,148 @@ struct ProjectSettingsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
 
+    // 本地编辑态
+    @State private var title: String = ""
+    @State private var description: String = ""
+    @State private var author: String = ""
+    @State private var language: String = ""
+    @State private var baseURL: String = ""
+    @State private var outputDir: String = ""
+    @State private var permalink: String = ""
+    @State private var paginationSize: Int = 10
+    @State private var buildDrafts: Bool = false
+    @State private var minifyHTML: Bool = true
+    @State private var fingerprintAssets: Bool = false
+    @State private var generateSearchIndex: Bool = true
+    @State private var generateRSS: Bool = true
+    @State private var generateSitemap: Bool = true
+    @State private var loaded: Bool = false
+    @State private var savedHint: String? = nil
+
     var body: some View {
         if let p = appState.project {
             VStack(alignment: .leading, spacing: 0) {
-                ListHeader(icon: "gearshape", title: "项目设置", count: 0)
-                Form {
-                    Section("基本信息") {
-                        LabeledContent("标题", value: p.config.title)
-                        LabeledContent("作者", value: p.config.author)
-                        LabeledContent("语言", value: p.config.language)
-                        LabeledContent("主题", value: p.config.themeName)
-                    }
-                    Section("构建") {
-                        LabeledContent("输出目录", value: p.config.outputDir)
-                        LabeledContent("永久链接", value: p.config.permalink)
-                        LabeledContent("包含草稿", value: p.config.buildDrafts ? "是" : "否")
-                        LabeledContent("生成 RSS", value: p.config.generateRSS ? "是" : "否")
-                        LabeledContent("生成 sitemap", value: p.config.generateSitemap ? "是" : "否")
-                        LabeledContent("生成搜索", value: p.config.generateSearchIndex ? "是" : "否")
-                    }
-                    Section("目录") {
-                        Button("在 Finder 中显示项目") {
-                            NSWorkspace.shared.activateFileViewerSelecting([p.root])
+                ListHeader(icon: "gearshape", title: "项目设置", count: 0,
+                           trailing: AnyView(
+                            Button {
+                                save()
+                            } label: { Label("保存", systemImage: "checkmark.circle.fill") }
+                            .buttonStyle(.borderedProminent)
+                            .keyboardShortcut("s", modifiers: .command)
+                            .help("保存 (⌘S)")
+                           ))
+
+                ScrollView {
+                    Form {
+                        Section("基本信息") {
+                            TextField("标题", text: $title)
+                            TextField("描述", text: $description, axis: .vertical)
+                                .lineLimit(1...3)
+                            TextField("作者", text: $author)
+                            HStack {
+                                Text("语言")
+                                    .frame(width: 80, alignment: .leading)
+                                TextField("如 zh-CN / en", text: $language)
+                            }
+                        }
+                        Section("URL 与目录") {
+                            TextField("基础 URL (baseURL)", text: $baseURL)
+                                .help("如 https://example.com/ 或 /")
+                            TextField("输出目录 (outputDir)", text: $outputDir)
+                                .help("相对项目根的路径, 如 output")
+                            TextField("永久链接格式", text: $permalink)
+                                .help("如 /:year/:month/:day/:slug/ 或 /posts/:slug/")
+                            HStack {
+                                Text("每页文章数")
+                                    .frame(width: 120, alignment: .leading)
+                                Stepper(value: $paginationSize, in: 1...100) {
+                                    Text("\(paginationSize)").monospacedDigit()
+                                }
+                            }
+                        }
+                        Section("构建选项") {
+                            Toggle("包含草稿", isOn: $buildDrafts)
+                            Toggle("压缩 HTML", isOn: $minifyHTML)
+                            Toggle("静态资源指纹 (cache busting)", isOn: $fingerprintAssets)
+                        }
+                        Section("生成开关") {
+                            Toggle("生成 RSS", isOn: $generateRSS)
+                            Toggle("生成 sitemap.xml", isOn: $generateSitemap)
+                            Toggle("生成 search.json", isOn: $generateSearchIndex)
+                        }
+                        Section {
+                            HStack {
+                                Button("在 Finder 中显示项目") {
+                                    NSWorkspace.shared.activateFileViewerSelecting([p.root])
+                                }
+                                Spacer()
+                                if let hint = savedHint {
+                                    Label(hint, systemImage: "checkmark.seal.fill")
+                                        .font(AppFont.caption())
+                                        .foregroundStyle(theme.accent)
+                                        .transition(.opacity)
+                                }
+                            }
+                        } header: {
+                            Text("操作")
                         }
                     }
+                    .formStyle(.grouped)
+                    .padding(.bottom, 24)
                 }
-                .formStyle(.grouped)
             }
+            .onAppear { hydrate() }
+            .onChange(of: appState.project?.root.path) { _, _ in hydrate() }
         } else {
             EmptyState(icon: "gearshape", text: "没有打开的项目")
+        }
+    }
+
+    private func hydrate() {
+        guard let cfg = appState.project?.config else { return }
+        title = cfg.title
+        description = cfg.description
+        author = cfg.author
+        language = cfg.language
+        baseURL = cfg.baseURL
+        outputDir = cfg.outputDir
+        permalink = cfg.permalink
+        paginationSize = cfg.paginationSize
+        buildDrafts = cfg.buildDrafts
+        minifyHTML = cfg.minifyHTML
+        fingerprintAssets = cfg.fingerprintAssets
+        generateSearchIndex = cfg.generateSearchIndex
+        generateRSS = cfg.generateRSS
+        generateSitemap = cfg.generateSitemap
+        loaded = true
+    }
+
+    private func save() {
+        guard let project = appState.project else { return }
+        var cfg = project.config
+        cfg.title = title
+        cfg.description = description
+        cfg.author = author
+        cfg.language = language
+        cfg.baseURL = baseURL
+        cfg.outputDir = outputDir
+        cfg.permalink = permalink
+        cfg.paginationSize = paginationSize
+        cfg.buildDrafts = buildDrafts
+        cfg.minifyHTML = minifyHTML
+        cfg.fingerprintAssets = fingerprintAssets
+        cfg.generateSearchIndex = generateSearchIndex
+        cfg.generateRSS = generateRSS
+        cfg.generateSitemap = generateSitemap
+        do {
+            try ConfigWriter.write(cfg, to: project.root.path)
+            project.refresh()
+            withAnimation { savedHint = "已保存 (\(Date().formatted(date: .omitted, time: .shortened)))" }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation { savedHint = nil }
+            }
+        } catch {
+            appState.log(.error("保存失败：\(error.localizedDescription)"))
         }
     }
 }

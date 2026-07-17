@@ -1,2 +1,60 @@
+# ===== 构建产物 =====
 ./build
 ./output
+
+# ===== Xcode 用户态/中间产物 =====
+*.xcuserstate
+xcuserdata/
+DerivedData/
+Package.resolved
+*.xccheckout
+*.xcscmblueprint
+*.dSYM.zip
+*.dSYM
+
+# ===== SwiftPM =====
+.swiftpm/
+Packages/
+.build/
+
+# ===== CocoaPods / Carthage =====
+Pods/
+Carthage/Build/
+Carthage/Checkouts/
+*.framework
+!default*.framework
+*.a
+
+# ===== 临时/系统 =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.TemporaryItems
+.fseventsd
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===== 编辑器 =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== 日志/崩溃 =====
+*.log
+*.crash
+*.ips
+
+# ===== 敏感信息 =====
+*.key
+*.pem
+*.p12
+.env
+.env.*
+!.env.example

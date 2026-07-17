@@ -1,0 +1,23 @@
+{
+  "/Users/mofan/Documents/MyProjects/SkycBlog/Core/Builder/ProjectScaffold.swift" : {
+    "const-values" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/ProjectScaffold.swiftconstvalues",
+    "dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/ProjectScaffold.d",
+    "diagnostics" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/ProjectScaffold.dia",
+    "object" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/ProjectScaffold.o",
+    "swift-dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/ProjectScaffold.swiftdeps"
+  },
+  "/Users/mofan/Documents/MyProjects/SkycBlog/Core/Templates/EJSEngine.swift" : {
+    "const-values" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/EJSEngine.swiftconstvalues",
+    "dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/EJSEngine.d",
+    "diagnostics" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/EJSEngine.dia",
+    "object" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/EJSEngine.o",
+    "swift-dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/EJSEngine.swiftdeps"
+  },
+  "/Users/mofan/Documents/MyProjects/SkycBlog/Core/Themes/HexoThemeAdapter.swift" : {
+    "const-values" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/HexoThemeAdapter.swiftconstvalues",
+    "dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/HexoThemeAdapter.d",
+    "diagnostics" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/HexoThemeAdapter.dia",
+    "object" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/HexoThemeAdapter.o",
+    "swift-dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/HexoThemeAdapter.swiftdeps"
+  }
+}

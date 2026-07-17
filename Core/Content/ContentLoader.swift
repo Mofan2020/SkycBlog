@@ -54,13 +54,19 @@ public final class ContentLoader {
 
         // 1. 加载文章
         try loadPosts(in: root.appendingPathComponent("content/_posts"), kind: .post, fm: fm)
+        // 兼容 Hexo 风格: source/_posts
+        try loadPosts(in: root.appendingPathComponent("source/_posts"), kind: .post, fm: fm)
         if includeDrafts || config.buildDrafts {
             try loadPosts(in: root.appendingPathComponent("content/_drafts"), kind: .draft, fm: fm)
         }
         // 2. 加载独立页面
         try loadPages(in: root.appendingPathComponent("content/pages"), kind: .page, fm: fm)
+        // 兼容 Hexo 风格: source/<page>/index.md 或 source/<page>.md
+        try loadHexoPages(projectRoot: projectRoot, fm: fm)
         // 3. 加载相册
         try loadAlbums(in: root.appendingPathComponent("content/albums"), fm: fm)
+        // 兼容 Hexo: source/albums/
+        try loadAlbums(in: root.appendingPathComponent("source/albums"), fm: fm)
 
         // 4. 分类聚合
         for p in pages {
@@ -100,6 +106,38 @@ public final class ContentLoader {
         }
     }
 
+    /// 加载 Hexo 风格页面: source/<name>/index.md 或 source/<name>.md (排除 _posts, albums, about 等)
+    private func loadHexoPages(projectRoot: String, fm: FileManager) throws {
+        let sourceDir = (projectRoot as NSString).appendingPathComponent("source")
+        guard fm.fileExists(atPath: sourceDir) else { return }
+        // 跳过 _posts, albums (已由 loadPosts/loadAlbums 处理)
+        let skipDirs: Set<String> = ["_posts", "albums", "_drafts", "_data"]
+        let items = try fm.contentsOfDirectory(atPath: sourceDir).sorted()
+        for name in items {
+            if skipDirs.contains(name) { continue }
+            if name.hasPrefix("_") { continue }  // _开头的忽略
+            let itemPath = (sourceDir as NSString).appendingPathComponent(name)
+            var isDir: ObjCBool = false
+            fm.fileExists(atPath: itemPath, isDirectory: &isDir)
+            if isDir.boolValue {
+                // source/<name>/index.md
+                let indexMD = (itemPath as NSString).appendingPathComponent("index.md")
+                if fm.fileExists(atPath: indexMD) {
+                    let relPath = ((indexMD as NSString).replacingOccurrences(of: projectRoot + "/", with: ""))
+                    let page = try parseFile(path: indexMD, relPath: relPath, kind: .page, fm: fm, slugOverride: name)
+                    pages.append(page)
+                }
+            } else {
+                // source/<name>.md
+                if name.hasSuffix(".md") {
+                    let relPath = ((itemPath as NSString).replacingOccurrences(of: projectRoot + "/", with: ""))
+                    let page = try parseFile(path: itemPath, relPath: relPath, kind: .page, fm: fm)
+                    pages.append(page)
+                }
+            }
+        }
+    }
+
     private func loadAlbums(in dir: String, fm: FileManager) throws {
         guard fm.fileExists(atPath: dir) else { return }
         let albums = try fm.contentsOfDirectory(atPath: dir)
@@ -124,7 +162,7 @@ public final class ContentLoader {
         }
     }
 
-    private func parseFile(path: String, relPath: String, kind: Page.Kind, fm: FileManager) throws -> Page {
+    private func parseFile(path: String, relPath: String, kind: Page.Kind, fm: FileManager, slugOverride: String? = nil) throws -> Page {
         let text = try String(contentsOfFile: path, encoding: .utf8)
         let (fmData, body) = FrontMatterParser.split(text)
         let rawID = ((path as NSString).lastPathComponent as NSString).deletingPathExtension
@@ -140,8 +178,9 @@ public final class ContentLoader {
         } else {
             idSlug = rawID
         }
+        let finalID = slugOverride ?? idSlug
         var p = Page(
-            id: idSlug,
+            id: finalID,
             kind: kind,
             sourcePath: path,
             relSourcePath: relPath,
@@ -151,7 +190,7 @@ public final class ContentLoader {
             categories: fmData.stringArray("categories"),
             draft: fmData.bool("draft"),
             layout: fmData.string("layout") ?? "post",
-            slug: fmData.string("slug") ?? idSlug,
+            slug: fmData.string("slug") ?? finalID,
             cover: fmData.string("cover"),
             excerpt: fmData.string("excerpt"),
             contentRaw: body

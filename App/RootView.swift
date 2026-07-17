@@ -46,6 +46,7 @@ struct RootView: View {
             AlbumDetailView(album: album)
                 .environmentObject(appState)
                 .themed()
+                .frame(minWidth: 1100, minHeight: 720)
         }
     }
 

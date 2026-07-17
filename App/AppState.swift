@@ -355,7 +355,122 @@ final class AppState: ObservableObject {
         }
     }
 
+    // MARK: - 主题
+
+    /// 列出项目 themes/ 下所有主题, 标记当前激活的
+    func listThemes() -> [(info: ThemeInfo, isActive: Bool)] {
+        guard let project = project else { return [] }
+        let active = project.config.themeName
+        let list = ThemeManager.listThemes(projectRoot: project.root.path)
+        return list.map { ($0, $0.name == active) }
+    }
+
+    /// 激活一个主题 (写 config.yaml 的 theme 字段), 激活后自动 refresh
+    func activateTheme(name: String) {
+        guard let project = project else { return }
+        let result = ThemeManager.activateTheme(name: name, projectRoot: project.root.path)
+        if result.ok {
+            project.refresh()
+            log(.success(result.message))
+        } else {
+            log(.error(result.message))
+        }
+    }
+
+    /// 从本地路径安装一个主题
+    func installThemeFromPath(source: String, name: String) {
+        guard let project = project else { return }
+        let result = ThemeManager.installTheme(fromSource: source, projectRoot: project.root.path, destName: name)
+        if result.ok {
+            project.refresh()
+            log(.success(result.message))
+        } else {
+            log(.error(result.message))
+        }
+    }
+
+    /// 在 Finder 中显示主题目录
+    func revealThemeInFinder(name: String) {
+        guard let project = project else { return }
+        let root = ThemeManager.themeRoot(projectRoot: project.root.path, themeName: name)
+        guard FileManager.default.fileExists(atPath: root) else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: root)])
+    }
+
     // MARK: - 分类 / 标签
+
+    /// 确保某个标签存在 (写入隐藏 _draft 虚拟草稿, 用户可在文章元数据里删除)
+    func ensureTagExists(_ name: String) {
+        ensureTaxonomy(name: name, kind: "tags")
+    }
+
+    func ensureCategoryExists(_ name: String) {
+        ensureTaxonomy(name: name, kind: "categories")
+    }
+
+    /// 写入一个隐藏 draft, 包含指定的 tag/cat, 让其出现在列表里。
+    /// 用户随后在文章元数据 sheet 里调整。
+    private func ensureTaxonomy(name: String, kind: String) {
+        guard let project = project else { return }
+        let v = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { return }
+
+        // 已存在就不写了
+        let existing: Set<String>
+        switch kind {
+        case "tags":       existing = Set(project.allTags.keys)
+        case "categories": existing = Set(project.allCategories.keys)
+        default:           existing = []
+        }
+        if existing.contains(v) {
+            log(.info("`\(v)` 已存在"))
+            return
+        }
+
+        let draftsDir = project.root.appendingPathComponent("content/_drafts")
+        try? FileManager.default.createDirectory(at: draftsDir, withIntermediateDirectories: true)
+        let path = draftsDir.appendingPathComponent("_taxonomy-\(kind).md")
+
+        // 读已存在 front matter (如果存在)
+        var currentTags: [String] = []
+        var currentCats: [String] = []
+        if let text = try? String(contentsOf: path, encoding: .utf8),
+           let parsed = try? PostManager.parse(text) {
+            currentTags = parsed.0.tags
+            currentCats = parsed.0.categories
+        }
+        let newTags: [String] = (kind == "tags") ? Array(Set(currentTags + [v])).sorted() : currentTags
+        let newCats: [String] = (kind == "categories") ? Array(Set(currentCats + [v])).sorted() : currentCats
+
+        // 直接手写 YAML 头 (避免依赖 FrontMatter init)
+        var lines: [String] = ["---"]
+        lines.append("title: \"Tag Pool (auto)\"")
+        lines.append("date: 1970-01-01 00:00:00")
+        lines.append("draft: true")
+        lines.append("layout: post")
+        if newTags.isEmpty {
+            lines.append("tags: []")
+        } else {
+            lines.append("tags: [" + newTags.map { "\"\($0)\"" }.joined(separator: ", ") + "]")
+        }
+        if newCats.isEmpty {
+            lines.append("categories: []")
+        } else {
+            lines.append("categories: [" + newCats.map { "\"\($0)\"" }.joined(separator: ", ") + "]")
+        }
+        lines.append("---")
+        lines.append("")
+        lines.append("<!-- 虚拟草稿, 用来集中保存标签/分类池. 在文章上编辑元数据 sheet 里调整实际使用. -->")
+
+        do {
+            let text = lines.joined(separator: "\n")
+            try text.write(toFile: path.path, atomically: true, encoding: .utf8)
+            project.refresh()
+            log(.success("已新建\(kind == "tags" ? "标签" : "分类") `\(v)`"))
+        } catch {
+            log(.error("写入失败：\(error.localizedDescription)"))
+        }
+    }
 
     /// 重命名一个标签：对所有 markdown front matter 中的 `tags` 列表做替换。
     func renameTagEverywhere(from old: String, to new: String) {
@@ -575,13 +690,14 @@ enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
     case categories = "分类"
     case assets = "资源"
     case plugins = "插件"
+    case themes = "主题"
     case settings = "项目设置"
 
     var id: String { rawValue }
 
     static let contentSections: [LibrarySection] = [.posts, .drafts, .pages, .albums]
     static let taxonomySections: [LibrarySection] = [.tags, .categories]
-    static let adminSections: [LibrarySection] = [.assets, .plugins, .settings]
+    static let adminSections: [LibrarySection] = [.themes, .assets, .plugins, .settings]
 
     var systemImage: String {
         switch self {
@@ -593,6 +709,7 @@ enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
         case .categories: return "folder"
         case .assets: return "photo"
         case .plugins: return "puzzlepiece"
+        case .themes: return "paintpalette"
         case .settings: return "gearshape"
         }
     }

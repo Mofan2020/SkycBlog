@@ -11,6 +11,7 @@
 		0C4CDCC63B95F9C91FFBCFBA /* SkycBlogCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0C6901E420E09676902863F9 /* BuildCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912FF5541A843C1E9095E49E /* BuildCommand.swift */; };
 		0E00399371C9BF6385845D81 /* MiniYAML.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2987CEF6CD797203F607966 /* MiniYAML.swift */; };
+		1566265A59509BC12D89B8B2 /* EJSEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C969A352EFB1ACDF67ADCD6 /* EJSEngine.swift */; };
 		1C2D9F9181B403FAB0323649 /* SkycBlogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */; };
 		21C3A4624983E1D6E877A9DB /* BlogCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6968851F277A935794EE6AE6 /* BlogCLI.swift */; };
 		220023A7DB23E0593F7CB949 /* Sheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE29EB73E51629A415D25A87 /* Sheets.swift */; };
@@ -49,6 +50,7 @@
 		EE93F9A5D72982E7555E0C99 /* WebPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C731EF0EC4EE82632F4E615A /* WebPreview.swift */; };
 		F485521C2277BA1493F5798F /* SkycBlogCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67317FC7516245A79055D606 /* SkycBlogCore.framework */; };
 		F5C261517E0CC5573EE3BEBF /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1511F568C9B24F54A3D684E3 /* ConfigWriter.swift */; };
+		FCD2126B8DC562738BB651B2 /* HexoThemeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE01276EECCD1321F078C006 /* HexoThemeAdapter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,8 +97,8 @@
 
 /* Begin PBXFileReference section */
 		05DD818386176E0B7425A16D /* DeployCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeployCommand.swift; sourceTree = "<group>"; };
-		0991017B300999C40046DA1F /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		09A787A4AD0DA235562E1A08 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		0C969A352EFB1ACDF67ADCD6 /* EJSEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EJSEngine.swift; sourceTree = "<group>"; };
 		1435ED9AE6EE3AF557B93D9A /* ServeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServeCommand.swift; sourceTree = "<group>"; };
 		1466B31BDF4C908357F9EBFA /* ThemeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeCommand.swift; sourceTree = "<group>"; };
 		1511F568C9B24F54A3D684E3 /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
@@ -108,7 +110,7 @@
 		4DA33F8313A6A379F4B2B179 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4DD8FAA4736220CC67F75537 /* PluginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManager.swift; sourceTree = "<group>"; };
 		55A0FA94F533C7104F8B1D13 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
-		5C54F3C6096A4AE880B1AE1A /* blog */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = text; path = blog; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C54F3C6096A4AE880B1AE1A /* blog */ = {isa = PBXFileReference; includeInIndex = 0; path = blog; sourceTree = BUILT_PRODUCTS_DIR; };
 		5CCE5EC1F70CB24AAA0DE954 /* HTMLMinifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLMinifier.swift; sourceTree = "<group>"; };
 		6236FC29D7EB717DE5F6A7ED /* Outputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outputs.swift; sourceTree = "<group>"; };
 		633CBB3977C50330BEA92CF2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -116,7 +118,7 @@
 		6968851F277A935794EE6AE6 /* BlogCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogCLI.swift; sourceTree = "<group>"; };
 		69B22B06EA05740FC27028E2 /* BlogProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogProject.swift; sourceTree = "<group>"; };
 		88CCD3A16D73C7F158AA16F5 /* Deploy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deploy.swift; sourceTree = "<group>"; };
-		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = SkycBlogApp.app; path = SkycBlog.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8BEDFA1E3AE9DEE0D481AACE /* SkycBlogApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkycBlogApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		912FF5541A843C1E9095E49E /* BuildCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildCommand.swift; sourceTree = "<group>"; };
 		93FECB95CCFC602E5C5BB635 /* SkycBlogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkycBlogApp.swift; sourceTree = "<group>"; };
 		9CE6FD798C84E3894DD8E84D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 		A8178C98D419BFA4E550FD2F /* SkycBlog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SkycBlog.entitlements; sourceTree = "<group>"; };
 		B2987CEF6CD797203F607966 /* MiniYAML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniYAML.swift; sourceTree = "<group>"; };
 		BBA3F68D5091A2CDE2A82CCB /* KeychainCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainCommand.swift; sourceTree = "<group>"; };
+		BE01276EECCD1321F078C006 /* HexoThemeAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexoThemeAdapter.swift; sourceTree = "<group>"; };
 		C212393995203A0D2C203C7D /* ContentLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
 		C53E0FF2B3208EB1094B1C6D /* EXIFReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EXIFReader.swift; sourceTree = "<group>"; };
 		C731EF0EC4EE82632F4E615A /* WebPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPreview.swift; sourceTree = "<group>"; };
@@ -163,7 +166,6 @@
 		0220729CD44C344FC1D34A0D = {
 			isa = PBXGroup;
 			children = (
-				0991017B300999C40046DA1F /* .gitignore */,
 				87C881E7BC0DF13F38EA4532 /* App */,
 				BB936A06525ECAE5B4693A16 /* CLI */,
 				D55B31B8B2B80AFDB55FF06C /* Core */,
@@ -194,6 +196,7 @@
 			isa = PBXGroup;
 			children = (
 				A31006CC9872980A2A852F8C /* EmbeddedTheme.swift */,
+				BE01276EECCD1321F078C006 /* HexoThemeAdapter.swift */,
 				9E3A8BB6DC1330C3B58271BD /* ThemeManager.swift */,
 			);
 			path = Themes;
@@ -202,6 +205,7 @@
 		47AA4CC6DA98A4DD081456D4 /* Templates */ = {
 			isa = PBXGroup;
 			children = (
+				0C969A352EFB1ACDF67ADCD6 /* EJSEngine.swift */,
 				E214E3DFEC5B7D2C1353BB24 /* TemplateEngine.swift */,
 			);
 			path = Templates;
@@ -436,9 +440,11 @@
 				F5C261517E0CC5573EE3BEBF /* ConfigWriter.swift in Sources */,
 				C49C0A85308623B1D56F45C7 /* ContentLoader.swift in Sources */,
 				3D739F294FF9A1C0B79CA6A3 /* Deploy.swift in Sources */,
+				1566265A59509BC12D89B8B2 /* EJSEngine.swift in Sources */,
 				62496C7C15B9FF2FC8E89975 /* EXIFReader.swift in Sources */,
 				AE6720FB2B751E169C7AD159 /* EmbeddedTheme.swift in Sources */,
 				D5B81AC1B9ABC4C9C1734ADC /* HTMLMinifier.swift in Sources */,
+				FCD2126B8DC562738BB651B2 /* HexoThemeAdapter.swift in Sources */,
 				AB31469AC29BA9E90B0E8E47 /* Keychain.swift in Sources */,
 				9ACEAE0E8A258CBBCA84A80D /* LocalServer.swift in Sources */,
 				7B265BC744F982B5E19DF5F4 /* MarkdownRenderer.swift in Sources */,

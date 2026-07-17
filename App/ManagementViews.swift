@@ -3,6 +3,46 @@ import SkycBlogCore
 import AppKit
 import UniformTypeIdentifiers
 
+// MARK: - 通用: 新建标签/分类 sheet
+
+struct AddTaxonomySheet: View {
+    @Environment(\.theme) private var theme
+    @Environment(\.dismiss) private var dismiss
+    let kind: String
+    @Binding var name: String
+    let onCreate: (String) -> Void
+    @State private var error: String? = nil
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SheetHeader(title: "新建\(kind)", subtitle: "在 _system 草稿里创建, 可在文章上调整")
+            Divider().background(theme.divider)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("名称").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                TextField("如: \(kind == "标签" ? "Swift" : "技术")", text: $name)
+                    .textFieldStyle(.roundedBorder)
+                if let error = error {
+                    Text(error).font(AppFont.caption()).foregroundStyle(.red)
+                }
+                Text("会立即出现在左侧 \(kind) 列表里")
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
+            }
+            .padding(20)
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "创建", cancel: "取消", onConfirm: doCreate)
+        }
+        .frame(width: 440, height: 240)
+    }
+
+    private func doCreate() {
+        let v = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { error = "请输入名称"; return }
+        onCreate(v)
+        dismiss()
+    }
+}
+
 // MARK: - 文章元数据编辑
 
 /// 编辑单篇文章的标题/标签/分类/草稿状态。Tags 与 Categories 都支持输入即时添加、点击 chip 删除。
@@ -293,6 +333,7 @@ struct RenameMediaSheet: View {
 struct AlbumDetailView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
+    @Environment(\.dismiss) private var dismiss
     let album: Page
 
     @State private var media: [AlbumManager.MediaInfo] = []
@@ -322,12 +363,13 @@ struct AlbumDetailView: View {
                 Image(systemName: "photo.stack").foregroundStyle(theme.accent)
                 Text(album.title.isEmpty ? albumName : album.title)
                     .font(AppFont.headline()).foregroundStyle(theme.ink)
+                    .lineLimit(1)
                 Text("· \(media.count) 项")
                     .font(AppFont.caption()).foregroundStyle(theme.inkTertiary)
                 Spacer()
                 TextField("搜索文件名…", text: $search)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 200)
+                    .frame(width: 220)
                 Button {
                     showAddSheet = true
                 } label: {
@@ -345,6 +387,15 @@ struct AlbumDetailView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
+                // 关闭按钮 (除 esc / 点外面外, 也有一个显式按钮)
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(theme.inkTertiary)
+                        .font(.system(size: 18))
+                }
+                .buttonStyle(.plain)
+                .help("关闭 (Esc)")
+                .keyboardShortcut(.escape, modifiers: [])
             }
             .padding(.horizontal, 16).padding(.vertical, 10)
             Divider().background(theme.divider)
@@ -560,6 +611,8 @@ struct TagManagerView: View {
     @State private var renameTarget: String? = nil
     @State private var renameValue: String = ""
     @State private var confirmDelete: String? = nil
+    @State private var showAdd: Bool = false
+    @State private var newName: String = ""
 
     private struct Row: Identifiable {
         let name: String
@@ -573,8 +626,68 @@ struct TagManagerView: View {
     }
 
     var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Image(systemName: "tag").foregroundStyle(theme.accent)
+                Text("标签").font(AppFont.headline()).foregroundStyle(theme.ink)
+                Text("\(rows.count)").font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                Spacer()
+                Button {
+                    showAdd = true
+                    newName = ""
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .buttonStyle(.borderless)
+                .help("新建标签 (会先在一篇 _system 草稿里创建, 之后可以再调整)")
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(theme.surface)
+            Divider().background(theme.divider)
+            group
+        }
+        .sheet(isPresented: $showAdd) {
+            AddTaxonomySheet(kind: "标签", name: $newName) { v in
+                appState.ensureTagExists(v)
+            }
+        }
+        .alert("重命名标签", isPresented: Binding(
+            get: { renameTarget != nil },
+            set: { if !$0 { renameTarget = nil } }
+        )) {
+            TextField("新名称", text: $renameValue)
+            Button("确定") {
+                if let old = renameTarget {
+                    let new = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !new.isEmpty, new != old {
+                        appState.renameTagEverywhere(from: old, to: new)
+                    }
+                }
+                renameTarget = nil
+            }
+            Button("取消", role: .cancel) { renameTarget = nil }
+        } message: {
+            Text("会把所有文章 front matter 里的 `\(renameTarget ?? "")` 替换为 `\(renameValue)`")
+        }
+        .alert("确认删除标签?",
+               isPresented: Binding(
+                get: { confirmDelete != nil },
+                set: { if !$0 { confirmDelete = nil } }
+               )) {
+            Button("从所有文章中移除", role: .destructive) {
+                if let t = confirmDelete { appState.removeTagEverywhere(t) }
+                confirmDelete = nil
+            }
+            Button("取消", role: .cancel) { confirmDelete = nil }
+        } message: {
+            Text("`\(confirmDelete ?? "")` 会从所有文章的 front matter 中移除。")
+        }
+    }
+
+    @ViewBuilder
+    private var group: some View {
         if rows.isEmpty {
-            EmptyState(icon: "tag", text: "还没有任何标签\n在文章上编辑元数据即可添加标签")
+            EmptyState(icon: "tag", text: "还没有任何标签\n点击右上角 + 新建一个\n或在文章上编辑元数据添加")
         } else {
             List {
                 Section {
@@ -582,41 +695,10 @@ struct TagManagerView: View {
                         rowView(row)
                     }
                 } header: {
-                    ListHeader(icon: "tag", title: "标签", count: rows.count)
+                    Text("已使用").font(AppFont.eyebrow()).foregroundStyle(theme.inkTertiary)
                 }
             }
             .listStyle(.inset)
-            .alert("重命名标签", isPresented: Binding(
-                get: { renameTarget != nil },
-                set: { if !$0 { renameTarget = nil } }
-            )) {
-                TextField("新名称", text: $renameValue)
-                Button("确定") {
-                    if let old = renameTarget {
-                        let new = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !new.isEmpty, new != old {
-                            appState.renameTagEverywhere(from: old, to: new)
-                        }
-                    }
-                    renameTarget = nil
-                }
-                Button("取消", role: .cancel) { renameTarget = nil }
-            } message: {
-                Text("会把所有文章 front matter 里的 `\(renameTarget ?? "")` 替换为 `\(renameValue)`")
-            }
-            .alert("确认删除标签?",
-                   isPresented: Binding(
-                    get: { confirmDelete != nil },
-                    set: { if !$0 { confirmDelete = nil } }
-                   )) {
-                Button("从所有文章中移除", role: .destructive) {
-                    if let t = confirmDelete { appState.removeTagEverywhere(t) }
-                    confirmDelete = nil
-                }
-                Button("取消", role: .cancel) { confirmDelete = nil }
-            } message: {
-                Text("`\(confirmDelete ?? "")` 会从所有文章的 front matter 中移除。")
-            }
         }
     }
 
@@ -661,6 +743,8 @@ struct CategoryManagerView: View {
     @State private var renameTarget: String? = nil
     @State private var renameValue: String = ""
     @State private var confirmDelete: String? = nil
+    @State private var showAdd: Bool = false
+    @State private var newName: String = ""
 
     private struct Row: Identifiable {
         let name: String
@@ -674,50 +758,70 @@ struct CategoryManagerView: View {
     }
 
     var body: some View {
-        if rows.isEmpty {
-            EmptyState(icon: "folder", text: "还没有任何分类\n在文章上编辑元数据即可添加分类")
-        } else {
-            List {
-                Section {
-                    ForEach(rows) { row in
-                        rowView(row)
+        VStack(spacing: 0) {
+            HStack {
+                Image(systemName: "folder").foregroundStyle(theme.accent)
+                Text("分类").font(AppFont.headline()).foregroundStyle(theme.ink)
+                Text("\(rows.count)").font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                Spacer()
+                Button {
+                    showAdd = true
+                    newName = ""
+                } label: { Image(systemName: "plus") }
+                .buttonStyle(.borderless)
+                .help("新建分类")
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(theme.surface)
+            Divider().background(theme.divider)
+            if rows.isEmpty {
+                EmptyState(icon: "folder", text: "还没有任何分类\n点击右上角 + 新建一个\n或在文章上编辑元数据添加")
+            } else {
+                List {
+                    Section {
+                        ForEach(rows) { row in rowView(row) }
+                    } header: {
+                        Text("已使用").font(AppFont.eyebrow()).foregroundStyle(theme.inkTertiary)
                     }
-                } header: {
-                    ListHeader(icon: "folder", title: "分类", count: rows.count)
                 }
+                .listStyle(.inset)
             }
-            .listStyle(.inset)
-            .alert("重命名分类", isPresented: Binding(
-                get: { renameTarget != nil },
-                set: { if !$0 { renameTarget = nil } }
-            )) {
-                TextField("新名称", text: $renameValue)
-                Button("确定") {
-                    if let old = renameTarget {
-                        let new = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !new.isEmpty, new != old {
-                            appState.renameCategoryEverywhere(from: old, to: new)
-                        }
+        }
+        .sheet(isPresented: $showAdd) {
+            AddTaxonomySheet(kind: "分类", name: $newName) { v in
+                appState.ensureCategoryExists(v)
+            }
+        }
+        .alert("重命名分类", isPresented: Binding(
+            get: { renameTarget != nil },
+            set: { if !$0 { renameTarget = nil } }
+        )) {
+            TextField("新名称", text: $renameValue)
+            Button("确定") {
+                if let old = renameTarget {
+                    let new = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !new.isEmpty, new != old {
+                        appState.renameCategoryEverywhere(from: old, to: new)
                     }
-                    renameTarget = nil
                 }
-                Button("取消", role: .cancel) { renameTarget = nil }
-            } message: {
-                Text("会把所有文章 front matter 里的 `\(renameTarget ?? "")` 替换为 `\(renameValue)`")
+                renameTarget = nil
             }
-            .alert("确认删除分类?",
-                   isPresented: Binding(
-                    get: { confirmDelete != nil },
-                    set: { if !$0 { confirmDelete = nil } }
-                   )) {
-                Button("从所有文章中移除", role: .destructive) {
-                    if let c = confirmDelete { appState.removeCategoryEverywhere(c) }
-                    confirmDelete = nil
-                }
-                Button("取消", role: .cancel) { confirmDelete = nil }
-            } message: {
-                Text("`\(confirmDelete ?? "")` 会从所有文章的 front matter 中移除。")
+            Button("取消", role: .cancel) { renameTarget = nil }
+        } message: {
+            Text("会把所有文章 front matter 里的 `\(renameTarget ?? "")` 替换为 `\(renameValue)`")
+        }
+        .alert("确认删除分类?",
+               isPresented: Binding(
+                get: { confirmDelete != nil },
+                set: { if !$0 { confirmDelete = nil } }
+               )) {
+            Button("从所有文章中移除", role: .destructive) {
+                if let c = confirmDelete { appState.removeCategoryEverywhere(c) }
+                confirmDelete = nil
             }
+            Button("取消", role: .cancel) { confirmDelete = nil }
+        } message: {
+            Text("`\(confirmDelete ?? "")` 会从所有文章的 front matter 中移除。")
         }
     }
 
@@ -870,5 +974,232 @@ struct FlowLayout: Layout {
             x += s.width + spacing
             rowH = max(rowH, s.height)
         }
+    }
+}
+
+// MARK: - 主题管理 (SkycBlog / Hexo / Hugo)
+
+struct ThemeManagerView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
+    @State private var refresh: Bool = false
+    @State private var showInstall: Bool = false
+
+    private var items: [(info: ThemeInfo, isActive: Bool)] {
+        _ = refresh
+        return appState.listThemes()
+    }
+
+    private var grouped: [(kind: ThemeKind, themes: [(info: ThemeInfo, isActive: Bool)])] {
+        let groups = Dictionary(grouping: items, by: { $0.info.kind })
+        return ThemeKind.allCases.compactMap { k in
+            guard let arr = groups[k], !arr.isEmpty else { return nil }
+            return (k, arr)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Image(systemName: "paintpalette").foregroundStyle(theme.accent)
+                Text("主题").font(AppFont.headline()).foregroundStyle(theme.ink)
+                Text("\(items.count)").font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                Spacer()
+                Button {
+                    showInstall = true
+                } label: {
+                    Label("安装主题", systemImage: "square.and.arrow.down")
+                }
+                .buttonStyle(.bordered)
+                .help("从本地路径安装一个主题")
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(theme.surface)
+            Divider().background(theme.divider)
+
+            if items.isEmpty {
+                EmptyState(icon: "paintpalette", text: "themes/ 目录还没有任何主题\n点击右上角安装一个")
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        ForEach(grouped, id: \.kind) { group in
+                            sectionView(kind: group.kind, themes: group.themes)
+                        }
+                    }
+                    .padding(16)
+                }
+            }
+        }
+        .sheet(isPresented: $showInstall) {
+            ThemeInstallSheet()
+        }
+        .id(refresh) // 强制刷新
+    }
+
+    @ViewBuilder
+    private func sectionView(kind: ThemeKind, themes: [(info: ThemeInfo, isActive: Bool)]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: kind.systemImage)
+                    .foregroundStyle(theme.accent)
+                Text("\(kind.displayName) 主题")
+                    .font(AppFont.headline())
+                    .foregroundStyle(theme.ink)
+                Text("\(themes.count)")
+                    .font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
+                Spacer()
+                if kind != .skyc {
+                    Text(kind == .hexo
+                         ? "识别自 _config.yml + layout/ — 构建时跳过 EJS 解析 (仅供预览)"
+                         : "识别自 theme.toml / layouts/ — 构建时跳过 Go template 解析 (仅供预览)")
+                        .font(AppFont.caption())
+                        .foregroundStyle(theme.inkTertiary)
+                }
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 12)], spacing: 12) {
+                ForEach(themes, id: \.info.id) { item in
+                    ThemeCard(info: item.info, isActive: item.isActive, onActivate: {
+                        if !item.info.kind.supportsBuild {
+                            appState.activateTheme(name: item.info.name)
+                            appState.log(.info("已切换 theme 字段, 但 \(item.info.kind.displayName) 主题的 EJS/Go 模板不会被 SkycBlog 引擎解析 — 仅可作为目录识别结果查看。"))
+                        } else {
+                            appState.activateTheme(name: item.info.name)
+                        }
+                        refresh.toggle()
+                     }, onReveal: {
+                        appState.revealThemeInFinder(name: item.info.name)
+                    })
+                }
+            }
+        }
+    }
+}
+
+struct ThemeCard: View {
+    @Environment(\.theme) private var theme
+    let info: ThemeInfo
+    let isActive: Bool
+    let onActivate: () -> Void
+    let onReveal: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: info.kind.systemImage)
+                    .foregroundStyle(info.kind.supportsBuild ? theme.accent : theme.inkTertiary)
+                    .font(.system(size: 18))
+                Text(info.name)
+                    .font(AppFont.headline())
+                    .foregroundStyle(theme.ink)
+                    .lineLimit(1)
+                Spacer()
+                if isActive {
+                    Text("已启用")
+                        .font(AppFont.monoCaption())
+                        .foregroundStyle(theme.accent)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(theme.tagBackground)
+                        .clipShape(Capsule())
+                }
+            }
+            if let desc = info.description, !desc.isEmpty {
+                Text(desc).font(AppFont.caption()).foregroundStyle(theme.inkSecondary)
+                    .lineLimit(2)
+            }
+            HStack(spacing: 6) {
+                if info.kind == .skyc {
+                    Label("支持构建", systemImage: "checkmark.seal.fill")
+                        .font(AppFont.monoCaption()).foregroundStyle(theme.accent)
+                } else {
+                    Label("识别, 不参与构建", systemImage: "eye")
+                        .font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                }
+                if let v = info.version {
+                    Text("v\(v)").font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                }
+                if let a = info.author {
+                    Text("·").font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                    Text(a).font(AppFont.monoCaption()).foregroundStyle(theme.inkTertiary)
+                }
+                Spacer()
+            }
+            HStack(spacing: 8) {
+                if isActive {
+                    Button {} label: { Text("当前主题") }
+                        .buttonStyle(.bordered)
+                        .disabled(true)
+                } else {
+                    Button("启用", action: onActivate)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!info.kind.supportsBuild)
+                        .help(info.kind.supportsBuild ? "切换到此主题" : "非 SkycBlog 主题暂不可用于构建")
+                }
+                Button("在 Finder 中显示", action: onReveal)
+                    .buttonStyle(.borderless)
+            }
+        }
+        .padding(14)
+        .background(theme.cardBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(isActive ? theme.accent : theme.divider, lineWidth: isActive ? 1.5 : 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct ThemeInstallSheet: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.theme) private var theme
+    @Environment(\.dismiss) private var dismiss
+    @State private var sourcePath: String = ""
+    @State private var destName: String = ""
+    @State private var error: String? = nil
+    @State private var showPicker: Bool = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SheetHeader(title: "安装主题", subtitle: "从本地目录复制到 themes/<name>")
+            Divider().background(theme.divider)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("源路径").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                HStack {
+                    TextField("/Users/.../my-theme-dir", text: $sourcePath)
+                        .textFieldStyle(.roundedBorder)
+                    Button("选择…") { showPicker = true }
+                        .buttonStyle(.bordered)
+                }
+                Text("主题名称").font(AppFont.eyebrow()).foregroundStyle(theme.inkSecondary)
+                TextField("在 themes/ 下的目录名", text: $destName)
+                    .textFieldStyle(.roundedBorder)
+                if let error = error {
+                    Text(error).font(AppFont.caption()).foregroundStyle(.red)
+                }
+                Text("会自动识别主题类型 (SkycBlog / Hexo / Hugo)").font(AppFont.monoCaption())
+                    .foregroundStyle(theme.inkTertiary)
+            }
+            .padding(20)
+            Divider().background(theme.divider)
+            SheetFooter(confirm: "安装", cancel: "取消", onConfirm: doInstall)
+        }
+        .frame(width: 540, height: 300)
+        .fileImporter(isPresented: $showPicker, allowedContentTypes: [.folder]) { result in
+            if case .success(let url) = result {
+                sourcePath = url.path
+                if destName.isEmpty {
+                    destName = url.lastPathComponent
+                }
+            }
+        }
+    }
+
+    private func doInstall() {
+        let src = sourcePath.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = destName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !src.isEmpty else { error = "请填写源路径"; return }
+        guard !name.isEmpty else { error = "请填写主题名称"; return }
+        appState.installThemeFromPath(source: src, name: name)
+        dismiss()
     }
 }

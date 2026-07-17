@@ -45,9 +45,7 @@ public final class Builder {
 
         // 2. 加载主题资源
         ThemeManager.copyDefaultIfMissing(projectRoot: projectRoot, themeName: config.themeName)
-        // static/ 目录拷贝到 outputDir 下对应的子目录,保留 /static/ 路径,这样模板里的 /static/css/main.css 链接能找到文件
-        copyStaticFolder(from: (themeRoot as NSString).appendingPathComponent("static"), to: (absOutput as NSString).appendingPathComponent("static"))
-        copyStaticFolder(from: (projectRoot as NSString).appendingPathComponent("static"), to: (absOutput as NSString).appendingPathComponent("static"))
+        let activeTheme = ThemeManager.detectTheme(at: themeRoot, name: config.themeName)
 
         // 3. 加载内容
         let content = ContentLoader(projectRoot: projectRoot, config: config)
@@ -62,6 +60,49 @@ public final class Builder {
         plugins.loadAll()
         plugins.site = TemplateContextBuilder.build(config: config, pages: content.pages, tags: content.allTags, categories: content.allCategories)
         plugins.fire("beforeBuild")
+
+        // 4.5 Hexo 主题接管: 跳过 SkycBlog 引擎, 全量用 EJS 渲染
+        if activeTheme.kind == .hexo {
+            onProgress?("使用 Hexo 主题 (\(config.themeName)) 接管构建")
+            let adapter = HexoThemeAdapter(projectRoot: projectRoot, themeRoot: themeRoot, config: config)
+            let hexoResult = adapter.build(
+                pages: content.pages,
+                tags: content.allTags,
+                categories: content.allCategories,
+                outDir: absOutput,
+                onProgress: onProgress
+            )
+            result.generated.append(contentsOf: hexoResult.generated)
+            result.warnings.append(contentsOf: hexoResult.warnings)
+            result.errors.append(contentsOf: hexoResult.errors)
+            // 仍然生成 rss / sitemap / search.json
+            if config.generateRSS {
+                let rss = RSSBuilder.build(config: config, posts: content.posts())
+                FSUtil.writeText(rss, to: (absOutput as NSString).appendingPathComponent("rss.xml"))
+                result.generated.append("rss.xml")
+            }
+            if config.generateSitemap {
+                let sm = SitemapBuilder.build(config: config, pages: content.pages)
+                FSUtil.writeText(sm, to: (absOutput as NSString).appendingPathComponent("sitemap.xml"))
+                result.generated.append("sitemap.xml")
+            }
+            if config.generateSearchIndex {
+                let idx = SearchIndexBuilder.build(pages: content.posts())
+                if let data = try? JSONSerialization.data(withJSONObject: idx, options: [.prettyPrinted, .sortedKeys]),
+                   let str = String(data: data, encoding: .utf8) {
+                    FSUtil.writeText(str, to: (absOutput as NSString).appendingPathComponent("search.json"))
+                    result.generated.append("search.json")
+                }
+            }
+            plugins.fire("afterBuild")
+            let elapsed = Date().timeIntervalSince(start)
+            result.elapsed = elapsed
+            Log.success("构建完成，用时 \(String(format: "%.2f", elapsed)) 秒，生成 \(result.generated.count) 个文件")
+            return result
+        }
+        // 静态资源 (SkycBlog 主题路径)
+        copyStaticFolder(from: (themeRoot as NSString).appendingPathComponent("static"), to: (absOutput as NSString).appendingPathComponent("static"))
+        copyStaticFolder(from: (projectRoot as NSString).appendingPathComponent("static"), to: (absOutput as NSString).appendingPathComponent("static"))
 
         // 5. 重新构建 site 上下文（插件可能修改 pages）
         var site = plugins.site

@@ -1,0 +1,23 @@
+{
+  "/Users/mofan/Documents/MyProjects/SkycBlog/Core/Builder/Outputs.swift" : {
+    "const-values" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/Outputs.swiftconstvalues",
+    "dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/Outputs.d",
+    "diagnostics" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/Outputs.dia",
+    "object" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/Outputs.o",
+    "swift-dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/Outputs.swiftdeps"
+  },
+  "/Users/mofan/Documents/MyProjects/SkycBlog/Core/Content/PostManager.swift" : {
+    "const-values" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PostManager.swiftconstvalues",
+    "dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PostManager.d",
+    "diagnostics" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PostManager.dia",
+    "object" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PostManager.o",
+    "swift-dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PostManager.swiftdeps"
+  },
+  "/Users/mofan/Documents/MyProjects/SkycBlog/Core/Plugins/PluginManager.swift" : {
+    "const-values" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PluginManager.swiftconstvalues",
+    "dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PluginManager.d",
+    "diagnostics" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PluginManager.dia",
+    "object" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PluginManager.o",
+    "swift-dependencies" : "/Users/mofan/Documents/MyProjects/SkycBlog/build/Build/Intermediates.noindex/SkycBlog.build/Debug/SkycBlogCore.build/Objects-normal/arm64/PluginManager.swiftdeps"
+  }
+}
